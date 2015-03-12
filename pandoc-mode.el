@@ -1651,10 +1651,9 @@ set. Without any prefix argument, the option is toggled."
     "Trim right padding in STRINGS.
 STRINGS is a list of strings ending in one or more spaces. The
 right padding of each string is trimmed to the longest string."
-    (let ((n (-min (-map (lambda (s)
-                           (let ((idx (string-match " *\\'" s)))
-                             (length (substring s idx))))
-                         strings))))
+    (let ((n (-min (--map (let ((idx (string-match-p " *\\'" it)))
+                            (length (substring it idx)))
+                          strings))))
       (--map (substring it 0 (if (> n 0) (- n))) strings)))
 
   (defun pandoc--tabulate (strings &optional trim colwidth width fmt-str colsep)
