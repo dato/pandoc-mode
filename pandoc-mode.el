@@ -7,6 +7,7 @@
 ;; Created: 31 Oct 2009
 ;; Version: 2.10
 ;; Keywords: text, pandoc
+;; Package-Requires: ((hydra "0.10.0") (dash "2.10.0"))
 
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions
@@ -41,6 +42,8 @@
 ;;; Code:
 
 (require 'easymenu)
+(require 'hydra)
+(require 'dash)
 
 (defun nonempty (string)
   "Return STRING, unless it is \"\", in which case return NIL."
@@ -83,6 +86,16 @@ list, not if it appears higher on the list."
   "List of functions to call before the directives are processed."
   :group 'pandoc
   :type '(repeat function))
+
+(defcustom pandoc-extension-active-marker "X"
+  "Marker used to indicate an active extension."
+  :group 'pandoc
+  :type 'string)
+
+(defcustom pandoc-extension-inactive-marker " "
+  "Marker used to indicate an inactive extension."
+  :group 'pandoc
+  :type 'string)
 
 (defcustom pandoc-major-modes
   '((haskell-mode . "native")
@@ -143,43 +156,43 @@ The value of this option is the basis for setting
   (set-default var value))
 
 (defcustom pandoc-output-formats
-  '(("asciidoc"          ".txt"     "AsciiDoc")
-    ("beamer"            ".tex"     "Beamer Slide Show")
-    ("context"           ".tex"     "ConTeXt")
-    ("docbook"           ".xml"     "DocBook XML")
-    ("docx"              ".docx"    "MS Word")
-    ("dokuwiki"          ".txt"     "DokuWiki")
-    ("dzslides"          ".html"    "DZSlides Slide Show")
-    ("epub"              ".epub"    "EPUB E-Book")
-    ("epub3"             ".epub"    "EPUB3 E-Book")
-    ("fb2"               ".fb2"     "FictionBook2")
-    ("haddock"           ".hs"      "Haddock")
-    ("html"              ".html"    "HTML")
-    ("html5"             ".html"    "HTML5")
-    ("icml"              ".icml"    "InDesign ICML")
-    ("json"              ".json"    "JSON")
-    ("latex"             ".tex"     "LaTeX")
-    ("man"               ""         "Man Page")
-    ("markdown"          ".md"      "Markdown")
-    ("markdown_github"   ".md"      "Markdown (Github)")
-    ("markdown_mmd"      ".md"      "Markdown (MMD)")
-    ("markdown_phpextra" ".md"      "Markdown (PHPExtra)")
-    ("markdown_strict"   ".md"      "Markdown (Strict)")
-    ("mediawiki"         ".mw"      "MediaWiki")
-    ("native"            ".hs"      "Native Haskell")
-    ("odt"               ".odt"     "OpenOffice Text Document")
-    ("opendocument"      ".odf"     "OpenDocument XML")
-    ("opml"              ".opml"    "OPML")
-    ("org"               ".org"     "Org-mode")
-    ("plain"             ".txt"     "Plain Text")
-    ("revealjs"          ".html"    "RevealJS Slide Show")
-    ("rst"               ".rst"     "reStructuredText")
-    ("rtf"               ".rtf"     "Rich Text Format")
-    ("s5"                ".html"    "S5 HTML/JS Slide Show")
-    ("slideous"          ".html"    "Slideous Slide Show")
-    ("slidy"             ".html"    "Slidy Slide Show")
-    ("texinfo"           ".texi"    "TeXinfo")
-    ("textile"           ".textile" "Textile"))
+  '(( "asciidoc"          ".txt"     "AsciiDoc"                 "a")
+    ( "beamer"            ".tex"     "Beamer Slide Show"        "b")
+    ( "context"           ".tex"     "ConTeXt"                  "c")
+    ( "docbook"           ".xml"     "DocBook XML"              "D")
+    ( "docx"              ".docx"    "MS Word"                  "d")
+    ( "dokuwiki"          ".txt"     "DokuWiki"                 "W")
+    ( "dzslides"          ".html"    "DZSlides Slide Show"      "z")
+    ( "epub"              ".epub"    "EPUB E-Book"              "e")
+    ( "epub3"             ".epub"    "EPUB3 E-Book"             "E")
+    ( "fb2"               ".fb2"     "FictionBook2"             "f")
+    ( "haddock"           ".hs"      "Haddock"                  "k")
+    ( "html"              ".html"    "HTML"                     "h")
+    ( "html5"             ".html"    "HTML5"                    "H")
+    ( "icml"              ".icml"    "InDesign ICML"            "I")
+    ( "json"              ".json"    "JSON"                     "j")
+    ( "latex"             ".tex"     "LaTeX"                    "l")
+    ( "man"               ""         "Man Page"                 "n")
+    ( "markdown"          ".md"      "Markdown"                 "m")
+    ( "markdown_github"   ".md"      "Markdown (Github)"        "G")
+    ( "markdown_mmd"      ".md"      "Markdown (MMD)"           "M")
+    ( "markdown_phpextra" ".md"      "Markdown (PHPExtra)"      "P")
+    ( "markdown_strict"   ".md"      "Markdown (Strict)"        "S")
+    ( "mediawiki"         ".mw"      "MediaWiki"                "w")
+    ( "native"            ".hs"      "Native Haskell"           "N")
+    ( "odt"               ".odt"     "OpenOffice Text Document" "L")
+    ( "opendocument"      ".odf"     "OpenDocument XML"         "p")
+    ( "opml"              ".opml"    "OPML"                     "O")
+    ( "org"               ".org"     "Org-mode"                 "o")
+    ( "plain"             ".txt"     "Plain Text"               "P")
+    ( "revealjs"          ".html"    "RevealJS Slide Show"      "J")
+    ( "rst"               ".rst"     "reStructuredText"         "r")
+    ( "rtf"               ".rtf"     "Rich Text Format"         "R")
+    ( "s5"                ".html"    "S5 HTML/JS Slide Show"    "x")
+    ( "slideous"          ".html"    "Slideous Slide Show"      "X")
+    ( "slidy"             ".html"    "Slidy Slide Show"         "y")
+    ( "texinfo"           ".texi"    "TeXinfo"                  "i")
+    ("textile"            ".textile" "Textile"                  "t"))
   "List of Pandoc output formats and their associated file extensions.
 The file extension should include a dot. The description appears
 in the menu. Note that it does not make sense to change the names
@@ -188,59 +201,60 @@ listed here. It is possible to customize the extensions and the
 descriptions, though, and you can remove output formats you don't
 use, if you want to unclutter the menu a bit."
   :group 'pandoc
-  :type '(repeat :tag "Output Format" (list (string :tag "Format") (string :tag "Extension") (string :tag "Description")))
+  :type '(repeat :tag "Output Format" (list (string :tag "Format") (string :tag "Extension") (string :tag "Description") (string :tag "Shortcut key")))
   :set 'pandoc--set-output-formats)
 
-(defvar pandoc--extensions
-  '(("footnotes"                           ("markdown" "markdown_phpextra"))
-    ("inline_notes"                        ("markdown"))
-    ("pandoc_title_block"                  ("markdown"))
-    ("mmd_title_block"                     ())
-    ("table_captions"                      ("markdown"))
-    ("implicit_figures"                    ("markdown"))
-    ("simple_tables"                       ("markdown"))
-    ("multiline_tables"                    ("markdown"))
-    ("grid_tables"                         ("markdown"))
-    ("pipe_tables"                         ("markdown" "markdown_phpextra" "markdown_github"))
-    ("citations"                           ("markdown"))
-    ("raw_tex"                             ("markdown"))
-    ("raw_html"                            ("markdown" "markdown_phpextra" "markdown_github"))
-    ("tex_math_dollars"                    ("markdown"))
-    ("tex_math_single_backslash"           ("markdown_github"))
-    ("tex_math_double_backslash"           ())
-    ("latex_macros"                        ("markdown"))
-    ("fenced_code_blocks"                  ("markdown" "markdown_phpextra" "markdown_github"))
-    ("fenced_code_attributes"              ("markdown" "markdown_github"))
-    ("backtick_code_blocks"                ("markdown" "markdown_github"))
-    ("inline_code_attributes"              ("markdown"))
-    ("markdown_in_html_blocks"             ("markdown"))
-    ("markdown_attribute"                  ("markdown_phpextra"))
-    ("escaped_line_breaks"                 ("markdown"))
-    ("link_attributes"                     ())
-    ("autolink_bare_uris"                  ("markdown_github"))
-    ("fancy_lists"                         ("markdown"))
-    ("startnum"                            ("markdown"))
-    ("definition_lists"                    ("markdown" "markdown_phpextra"))
-    ("example_lists"                       ("markdown"))
-    ("all_symbols_escapable"               ("markdown"))
-    ("intraword_underscores"               ("markdown" "markdown_phpextra" "markdown_github"))
-    ("blank_before_blockquote"             ("markdown"))
-    ("blank_before_header"                 ("markdown"))
-    ("strikeout"                           ("markdown" "markdown_github"))
-    ("superscript"                         ("markdown"))
-    ("subscript"                           ("markdown"))
-    ("hard_line_breaks"                    ("markdown_github"))
-    ("abbreviations"                       ("markdown_phpextra"))
-    ("auto_identifiers"                    ("markdown"))
-    ("header_attributes"                   ("markdown" "markdown_phpextra"))
-    ("mmd_header_identifiers"              ())
-    ("implicit_header_references"          ("markdown"))
-    ("line_blocks"                         ("markdown"))
-    ("ignore_line_breaks"                  ())
-    ("yaml_metadata_block"                 ("markdown"))
-    ("ascii_identifiers"                   ("markdown_github"))
-    ("lists_without_preceding_blankline"   ("markdown_github")))
-  "List of Markdown extensions supported by Pandoc.")
+(eval-and-compile
+  (defvar pandoc--extensions
+    '(("footnotes"                           ("markdown" "markdown_phpextra"))
+      ("inline_notes"                        ("markdown"))
+      ("pandoc_title_block"                  ("markdown"))
+      ("mmd_title_block"                     ())
+      ("table_captions"                      ("markdown"))
+      ("implicit_figures"                    ("markdown"))
+      ("simple_tables"                       ("markdown"))
+      ("multiline_tables"                    ("markdown"))
+      ("grid_tables"                         ("markdown"))
+      ("pipe_tables"                         ("markdown" "markdown_phpextra" "markdown_github"))
+      ("citations"                           ("markdown"))
+      ("raw_tex"                             ("markdown"))
+      ("raw_html"                            ("markdown" "markdown_phpextra" "markdown_github"))
+      ("tex_math_dollars"                    ("markdown"))
+      ("tex_math_single_backslash"           ("markdown_github"))
+      ("tex_math_double_backslash"           ())
+      ("latex_macros"                        ("markdown"))
+      ("fenced_code_blocks"                  ("markdown" "markdown_phpextra" "markdown_github"))
+      ("fenced_code_attributes"              ("markdown" "markdown_github"))
+      ("backtick_code_blocks"                ("markdown" "markdown_github"))
+      ("inline_code_attributes"              ("markdown"))
+      ("markdown_in_html_blocks"             ("markdown"))
+      ("markdown_attribute"                  ("markdown_phpextra"))
+      ("escaped_line_breaks"                 ("markdown"))
+      ("link_attributes"                     ())
+      ("autolink_bare_uris"                  ("markdown_github"))
+      ("fancy_lists"                         ("markdown"))
+      ("startnum"                            ("markdown"))
+      ("definition_lists"                    ("markdown" "markdown_phpextra"))
+      ("example_lists"                       ("markdown"))
+      ("all_symbols_escapable"               ("markdown"))
+      ("intraword_underscores"               ("markdown" "markdown_phpextra" "markdown_github"))
+      ("blank_before_blockquote"             ("markdown"))
+      ("blank_before_header"                 ("markdown"))
+      ("strikeout"                           ("markdown" "markdown_github"))
+      ("superscript"                         ("markdown"))
+      ("subscript"                           ("markdown"))
+      ("hard_line_breaks"                    ("markdown_github"))
+      ("abbreviations"                       ("markdown_phpextra"))
+      ("auto_identifiers"                    ("markdown"))
+      ("header_attributes"                   ("markdown" "markdown_phpextra"))
+      ("mmd_header_identifiers"              ())
+      ("implicit_header_references"          ("markdown"))
+      ("line_blocks"                         ("markdown"))
+      ("ignore_line_breaks"                  ())
+      ("yaml_metadata_block"                 ("markdown"))
+      ("ascii_identifiers"                   ("markdown_github"))
+      ("lists_without_preceding_blankline"   ("markdown_github")))
+    "List of Markdown extensions supported by Pandoc."))
 
 (defvar pandoc--cli-options nil
   "List of Pandoc command-line options that do not need special treatment.
@@ -687,19 +701,9 @@ menu."
 
 (defvar pandoc-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\C-c/c" #'pandoc-insert-@)
-    (define-key map "\C-c/C" #'pandoc-select-@)
-    (define-key map "\C-c/f" #'pandoc-set-master-file)
-    (define-key map "\C-c/m" #'pandoc-set-metadata)
-    (define-key map "\C-c/p" #'pandoc-convert-to-pdf)
-    (define-key map "\C-c/r" #'pandoc-run-pandoc)
-    (define-key map "\C-c/s" #'pandoc-save-settings-file)
-    (define-key map "\C-c/S" #'pandoc-view-settings)
-    (define-key map "\C-c/v" #'pandoc-set-variable)
-    (define-key map "\C-c/V" #'pandoc-view-output)
-    (define-key map "\C-c/w" #'pandoc-set-write)
+    (define-key map "\C-c/" #'pandoc-main-hydra/body)
     map)
-  "Keymap for pandoc-mode.")
+  "Keymap for pandoc-mode")
 
 ;;;###autoload
 (define-minor-mode pandoc-mode
@@ -840,7 +844,7 @@ write extension is to be queried."
 
 (defun pandoc-toggle-extension (extension rw)
   "Toggle the value of EXTENSION.
-RW is either 'read or 'write, indicating whether the extension
+RW is either `read' or `write', indicating whether the extension
 should be toggled for the input or the output format."
   (interactive (list (completing-read "Extension: " pandoc--extensions nil t)
                      (intern (completing-read "Read/write: " '("read" "write") nil t))))
@@ -852,6 +856,20 @@ should be toggled for the input or the output format."
                       '-)  ; we explicitly unset it
                      (t '+)))) ; otherwise we explicitly set it
     (pandoc--set-extension extension rw new-value)))
+
+(defun pandoc-toggle-read-extension-by-number (n)
+  "Toggle a `read' extension.
+N is the index of the extension in `pandoc--extensions'."
+  (interactive "P")
+  (let* ((ext (caar (nthcdr (1- n) pandoc--extensions))))
+    (pandoc-toggle-extension ext 'read)))
+
+(defun pandoc-toggle-write-extension-by-number (n)
+  "Toggle a `write' extension.
+N is the index of the extension in `pandoc--extensions'."
+  (interactive "P")
+  (let* ((ext (caar (nthcdr (1- n) pandoc--extensions))))
+    (pandoc-toggle-extension ext 'write)))
 
 (defun pandoc--create-settings-filename (type filename output-format)
   "Create a settings filename.
@@ -1362,7 +1380,14 @@ format)."
     (setq pandoc--local-settings (copy-tree pandoc--options))
     (pandoc--set 'write format)
     (pandoc--set 'read (cdr (assq major-mode pandoc-major-modes))))
-  (setq pandoc--settings-modified-flag nil))
+  (setq pandoc--settings-modified-flag nil)
+  (message "Output format set to `%s'" format))
+
+(defun pandoc-set-read (format)
+  "Set the input format to FORMAT."
+  (interactive (list (completing-read "Set input format to: " pandoc--input-formats nil t)))
+  (pandoc--set 'read format)
+  (message "Input format set to `%s'" format))
 
 (defun pandoc-set-output (prefix)
   "Set the output file.
@@ -1636,8 +1661,8 @@ right padding of each string is trimmed to the longest string."
     "Tabulate STRINGS.
 STRINGS is a list of strings. The return value is a string
 containing STRINGS tabulated top-to-bottom, left-to-right.
-COLWIDTH is the number of columns of the table, which defaults to
-the width of the largest string in STRINGS. Each string is
+COLWIDTH is the width of the columns of the table, which defaults
+to the width of the largest string in STRINGS. Each string is
 right-padded with spaces to make it the length of COLWIDTH. WIDTH
 is the width of the table, which defaults to the width of the
 current frame. The number of rows and columns is calculated on
