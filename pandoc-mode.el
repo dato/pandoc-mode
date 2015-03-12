@@ -1621,6 +1621,211 @@ set. Without any prefix argument, the option is toggled."
 
 (easy-menu-add pandoc-mode-menu pandoc-mode-map)
 
+(eval-and-compile
+  (defun pandoc--trim-right-padding (strings)
+    "Trim right padding in STRINGS.
+STRINGS is a list of strings ending in one or more spaces. The
+right padding of each string is trimmed to the longest string."
+    (let ((n (-min (-map (lambda (s)
+                           (let ((idx (string-match " *\\'" s)))
+                             (length (substring s idx))))
+                         strings))))
+      (--map (substring it 0 (if (> n 0) (- n))) strings)))
+
+  (defun pandoc--tabulate (strings &optional trim colwidth width fmt-str colsep)
+    "Tabulate STRINGS.
+STRINGS is a list of strings. The return value is a string
+containing STRINGS tabulated top-to-bottom, left-to-right.
+COLWIDTH is the number of columns of the table, which defaults to
+the width of the largest string in STRINGS. Each string is
+right-padded with spaces to make it the length of COLWIDTH. WIDTH
+is the width of the table, which defaults to the width of the
+current frame. The number of rows and columns is calculated on
+the basis of COLWIDTH and WIDTH.
+
+FMT-STR is a format string that is used to format STRINGS. It
+defaults to \"%-<n>s\", where <n> is colwidth. FMT-STR must
+contain a \"%s\" specifier for the strings to be tabulated. Note
+that if FMT-STR is provided, COLWIDTH is only used to calculate
+the number of rows and columns, not for padding the strings. The
+calling function must then ensure that the strings are of
+equal length.
+
+COLSEP is the string placed between two columns. It defaults to
+two spaces. The length of this string is taken into account when
+calculating the number of columns.
+
+If TRIM is `t', each row is trimmed to its widest member."
+
+    (or colwidth (setq colwidth (-max (--map (length it) strings))))
+    (or width (setq width (frame-width)))
+    (or fmt-str (setq fmt-str (format "%%-%ds" colwidth)))
+    (or colsep (setq colsep "  "))
+    (let* ((n-cols (/ width (+ (length colsep) colwidth)))
+           (n-rows (ceiling (/ (length strings) (float n-cols))))
+           (cols (-partition-all n-rows (--map (format fmt-str it) strings))))
+      (if trim
+          (setq cols (-map #'pandoc--trim-right-padding cols)))
+      (mapconcat (lambda (line)
+                   (mapconcat #'identity line colsep))
+                 (apply #'-zip-fill "" cols)
+                 "\n")))
+
+  (defun pandoc--tabulate-extensions (rw)
+    "Tabulate extension strings as a new string.
+RW can be `read' or `write', indicating which extensions to
+insert."
+    (let* ((extensions (--map (car it) pandoc--extensions))
+           (colwidth (-max (-map #'length extensions)))
+           (fmt-str (format "%%2d %%%%s(pandoc--extension-active-marker \"%%s\" '%%s) %%-%ds" colwidth))
+           (strings (--map (format fmt-str
+                                   (1+ (-elem-index it extensions))
+                                   it
+                                   rw
+                                   (replace-regexp-in-string "_" " " it))
+                           extensions)))
+      (pandoc--tabulate strings t (+ 5 colwidth) nil "%s" nil)))
+
+  (defun pandoc--tabulate-output-formats ()
+    "Tabulate output formats for `pandoc-output-format-hydra'."
+    (let ((strings (--map (concat "_" (cadddr it) "_: " (caddr it)) pandoc-output-formats)))
+      (pandoc--tabulate strings t nil 150)))
+
+  ) ; eval-and-compile
+
+;; (defmacro define-pandoc-hydra (name spec docstring heads)
+;;   "Define a pandoc-mode hydra."
+;;   (let ((tmp (make-symbol "hds"))
+;;         (tempheads heads))
+;;     `(let ((,tmp ,tempheads))
+;;        (defhydra ,name ,spec 
+;;          ,docstring
+;;          ,@(--map (list (cadddr it) (list 'pandoc-set-write (car it)))
+;;                   tmp)))))
+
+(defhydra pandoc-main-hydra (:foreign-keys warn :exit t :hint nil)
+  "
+_r_: Run Pandoc               _i_: Input format
+_p_: Convert to pdf           _o_: Output format
+_V_: View output buffer       _s_: Settings files
+_S_: View current settings    _e_: Example lists
+-------------------------------------------------
+_f_: Files                    _O_: Options
+_w_: Switches
+
+"
+  ("r" pandoc-run-pandoc)
+  ("p" pandoc-convert-to-pdf)
+  ("V" pandoc-view-output)
+  ("S" pandoc-view-settings)
+  ("i" pandoc-input-format-hydra/body)
+  ("o" pandoc-set-write nil :exit)
+  ("s" pandoc-settings-file-hydra/body)
+  ("e" pandoc-@-hydra/body)
+  ("f" pandoc-file-hydra/body)
+  ("w" pandoc-switches-hydra/body)
+  ("O" pandoc-options-hydra/body)
+  ("q" nil "Cancel"))
+
+(defhydra pandoc-input-format-hydra (:foreign-keys warn :exit t :hint nil)
+  "
+Input format: %(pandoc--get 'read)
+
+_N_: Native Haskell               _O_: OPML
+_m_: Pandoc Markdown              _t_: Textile
+_S_: Strict Markdown              _l_: LaTeX
+_M_: MultiMarkdown                _o_: Orgmode
+_P_: PHPExtra Markdown            _x_: Txt2Tags
+_G_: Github Markdown              _T_: Twiki
+_r_: reStructuredText             _k_: Haddock Markup
+_h_: HTML                         _w_: MediaWiki
+_d_: docx                         _j_: JSON
+-----------------------------------------------------
+_E_: Extensions
+
+"
+  ("N" (pandoc-set-read "native"))
+  ("m" (pandoc-set-read "markdown"))
+  ("S" (pandoc-set-read "markdown_strict"))
+  ("M" (pandoc-set-read "markdown_mmd"))
+  ("P" (pandoc-set-read "markdown_phpextra"))
+  ("G" (pandoc-set-read "markdown_github"))
+  ("r" (pandoc-set-read "rst"))
+  ("h" (pandoc-set-read "html"))
+  ("l" (pandoc-set-read "latex"))
+  ("o" (pandoc-set-read "org"))
+  ("d" (pandoc-set-read "docx"))
+  ("j" (pandoc-set-read "json"))
+  ("O" (pandoc-set-read "opml"))
+  ("t" (pandoc-set-read "textile"))
+  ("w" (pandoc-set-read "mediawiki"))
+  ("x" (pandoc-set-read "t2t"))
+  ("T" (pandoc-set-read "twiki"))
+  ("k" (pandoc-set-read "haddock"))
+  ("E" pandoc-read-exts-hydra/body)
+  ("q" nil "Cancel")
+  ("b" pandoc-main-hydra/body "Back to main menu"))
+
+;; (define-pandoc-hydra pandoc-output-format-hydra (:foreign-keys warn :exit t :hint nil)
+;;   (concat "\n" (pandoc--tabulate-output-formats) "\n\n")
+;;   (--map (cons (cadddr it) (car it)) pandoc-output-formats))
+
+;; (defhydra pandoc-output-format-hydra )
+
+(defhydra pandoc-file-hydra (:foreign-keys warn :exit t :hint nil)
+  "
+_m_: Master file       [%(pandoc--get 'master-file)]
+_o_: Output file       [%(pandoc--get 'output)]
+_O_: Output directory  [%(pandoc--get 'output-dir)]
+_d_: Data directory    [%(pandoc--get 'data-dir)]
+
+"
+  ("m" pandoc-set-master-file)
+  ("o" pandoc-set-output)
+  ("O" pandoc-set-output-dir)
+  ("d" pandoc-set-data-dir)
+  ("q" nil "Cancel"))
+
+(defhydra pandoc-settings-file-hydra (:foreign-keys warn :exit t :hint nil)
+  "
+_s_: Save file settings
+_p_: Save project file
+_g_: Save global settings file
+_r_: Revert settings
+
+"
+  ("s" pandoc-save-settings-file)
+  ("p" pandoc-save-project-file)
+  ("g" pandoc-save-global-settings-file)
+  ("r" pandoc-revert-settings)
+  ("q" nil "Cancel"))
+
+(defhydra pandoc-@-hydra (:foreign-keys warn :exit t :hint nil)
+  "
+_i_: Insert new example
+_s_: Select and insert example label
+
+"
+  ("i" pandoc-insert-@)
+  ("s" pandoc-select-@)
+  ("q" nil "Cancel"))
+
+(defun pandoc--extension-active-marker (extension rw)
+  "Return a marker indicating whether EXTENSION is active."
+  (if (pandoc--extension-active-p extension rw)
+      pandoc-extension-active-marker
+    pandoc-extension-inactive-marker))
+
+(defhydra pandoc-read-exts-hydra ()
+  (concat "\n" (pandoc--tabulate-extensions 'read) "\n\n<number> _t_: Toggle extension, _q_: quit")
+  ("t" pandoc-toggle-read-extension-by-number nil)
+  ("q" nil nil))
+
+(defhydra pandoc-write-exts-hydra ()
+  (concat "\n" (pandoc--tabulate-extensions 'write) "\n\n<number> _t_: Toggle extension, _q_: quit")
+  ("t" pandoc-toggle-write-extension-by-number nil)
+  ("q" nil nil))
+
 ;;; Faces:
 ;;; Regexp based on github.com/vim-pandoc/vim-pandoc-syntax.
 ;;; Overall structure modeled after face handling in markdown-mode.el:
