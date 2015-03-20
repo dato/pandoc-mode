@@ -113,98 +113,101 @@ list, not if it appears higher on the list."
   :group 'pandoc
   :type '(repeat (cons (symbol :tag "Major mode") (string :tag "Input format"))))
 
-(defvar pandoc--input-formats-menu
-  '(("Native Haskell" . "native")
-    ("Markdown" . "markdown")
-    ("Markdown (Strict)" . "markdown_strict")
-    ("Markdown (MMD" . "markdown_mmd")
-    ("Markdown (PHPExtra)" . "markdown_phpextra")
-    ("Markdown (Github)" . "markdown_github")
-    ("reStructuredText" . "rst")
-    ("HTML" . "html")
-    ("LaTeX" . "latex")
-    ("Orgmode" . "org")
-    ("JSON" . "json")
-    ("OPML" . "opml")
-    ("Textile" . "textile")
-    ("MediaWiki" . "mediawiki")
-    ("Txt2Tags" . "t2t")
-    ("Twiki" . "twiki")
-    ("Haddock Markup" . "haddock"))
-  "List of items in pandoc-mode's input format menu.")
+;; These are eval'ed during compile so we can create hydras
+(eval-and-compile
+  (defvar pandoc--input-formats
+    '(("haddock"           "Haddock Markup"      "k")
+      ("html"              "HTML"                "h")
+      ("json"              "JSON"                "j")
+      ("latex"             "LaTeX"               "l")
+      ("markdown"          "Markdown"            "m")
+      ("markdown_github"   "Markdown (Github)"   "G")
+      ("markdown_mmd"      "Markdown (MMD)"      "M")
+      ("markdown_phpextra" "Markdown (PHPExtra)" "P")
+      ("markdown_strict"   "Markdown (Strict)"   "S")
+      ("mediawiki"         "MediaWiki"           "w")
+      ("native"            "Native Haskell"      "N")
+      ("opml"              "OPML"                "O")
+      ("org"               "Orgmode"             "o")
+      ("rst"               "reStructuredText"    "r")
+      ("textile"           "Textile"             "T")
+      ("twiki"             "Twiki"               "t")
+      ("t2t"               "Txt2Tags"            "x"))
+    "List of pandoc input formats.")
 
-(defvar pandoc--input-formats
-  (mapcar #'cdr pandoc--input-formats-menu)
-  "List of pandoc input formats.")
+  (defvar pandoc--input-formats-menu
+    (mapcar (lambda (f)
+              (cons (cadr f) (car f)))
+            pandoc--input-formats)
+    "List of items in pandoc-mode's input format menu.")
 
-(defvar pandoc--output-formats-menu nil
-  "List of items in pandoc-mode's output format menu.")
+  (defvar pandoc--output-formats-menu nil
+    "List of items in pandoc-mode's output format menu.")
 
-(defvar pandoc--output-formats-list nil
-  "List of Pandoc output formats.")
+  (defvar pandoc--output-formats-list nil
+    "List of Pandoc output formats.")
 
-(defun pandoc--set-output-formats (var value)
-  "Set `pandoc-output-formats'.
+  (defun pandoc--set-output-formats (var value)
+    "Set `pandoc-output-formats'.
 The value of this option is the basis for setting
 `pandoc--output-formats-menu' and `pandoc--output-formats-list'."
-  (setq pandoc--output-formats-menu (mapcar (lambda (elem)
-                                              (cons (cadr (cdr elem)) (car elem)))
-                                            value))
-  (setq pandoc--output-formats-list (mapcar (lambda (elem)
-                                              (cons (car elem) (cadr elem)))
-                                            value))
-  (set-default var value))
+    (setq pandoc--output-formats-menu (mapcar (lambda (elem)
+                                                (cons (cadr (cdr elem)) (car elem)))
+                                              value))
+    (setq pandoc--output-formats-list (mapcar (lambda (elem)
+                                                (cons (car elem) (cadr elem)))
+                                              value))
+    (set-default var value))
 
-(defcustom pandoc-output-formats
-  '(( "asciidoc"          ".txt"     "AsciiDoc"                 "a")
-    ( "beamer"            ".tex"     "Beamer Slide Show"        "b")
-    ( "context"           ".tex"     "ConTeXt"                  "c")
-    ( "docbook"           ".xml"     "DocBook XML"              "D")
-    ( "docx"              ".docx"    "MS Word"                  "d")
-    ( "dokuwiki"          ".txt"     "DokuWiki"                 "W")
-    ( "dzslides"          ".html"    "DZSlides Slide Show"      "z")
-    ( "epub"              ".epub"    "EPUB E-Book"              "e")
-    ( "epub3"             ".epub"    "EPUB3 E-Book"             "E")
-    ( "fb2"               ".fb2"     "FictionBook2"             "f")
-    ( "haddock"           ".hs"      "Haddock"                  "k")
-    ( "html"              ".html"    "HTML"                     "h")
-    ( "html5"             ".html"    "HTML5"                    "H")
-    ( "icml"              ".icml"    "InDesign ICML"            "I")
-    ( "json"              ".json"    "JSON"                     "j")
-    ( "latex"             ".tex"     "LaTeX"                    "l")
-    ( "man"               ""         "Man Page"                 "n")
-    ( "markdown"          ".md"      "Markdown"                 "m")
-    ( "markdown_github"   ".md"      "Markdown (Github)"        "G")
-    ( "markdown_mmd"      ".md"      "Markdown (MMD)"           "M")
-    ( "markdown_phpextra" ".md"      "Markdown (PHPExtra)"      "P")
-    ( "markdown_strict"   ".md"      "Markdown (Strict)"        "S")
-    ( "mediawiki"         ".mw"      "MediaWiki"                "w")
-    ( "native"            ".hs"      "Native Haskell"           "N")
-    ( "odt"               ".odt"     "OpenOffice Text Document" "L")
-    ( "opendocument"      ".odf"     "OpenDocument XML"         "p")
-    ( "opml"              ".opml"    "OPML"                     "O")
-    ( "org"               ".org"     "Org-mode"                 "o")
-    ( "plain"             ".txt"     "Plain Text"               "P")
-    ( "revealjs"          ".html"    "RevealJS Slide Show"      "J")
-    ( "rst"               ".rst"     "reStructuredText"         "r")
-    ( "rtf"               ".rtf"     "Rich Text Format"         "R")
-    ( "s5"                ".html"    "S5 HTML/JS Slide Show"    "x")
-    ( "slideous"          ".html"    "Slideous Slide Show"      "X")
-    ( "slidy"             ".html"    "Slidy Slide Show"         "y")
-    ( "texinfo"           ".texi"    "TeXinfo"                  "i")
-    ("textile"            ".textile" "Textile"                  "t"))
-  "List of Pandoc output formats and their associated file extensions.
+  (defcustom pandoc-output-formats
+    '(("asciidoc"          ".txt"     "AsciiDoc"                 "a")
+      ("beamer"            ".tex"     "Beamer Slide Show"        "B")
+      ("context"           ".tex"     "ConTeXt"                  "c")
+      ("docbook"           ".xml"     "DocBook XML"              "D")
+      ("dokuwiki"          ".txt"     "DokuWiki"                 "W")
+      ("dzslides"          ".html"    "DZSlides Slide Show"      "z")
+      ("epub"              ".epub"    "EPUB E-Book"              "e")
+      ("epub3"             ".epub"    "EPUB3 E-Book"             "E")
+      ("fb2"               ".fb2"     "FictionBook2"             "f")
+      ("haddock"           ".hs"      "Haddock"                  "k")
+      ("html"              ".html"    "HTML"                     "h")
+      ("html5"             ".html"    "HTML5"                    "H")
+      ("icml"              ".icml"    "InDesign ICML"            "I")
+      ("json"              ".json"    "JSON"                     "j")
+      ("latex"             ".tex"     "LaTeX"                    "l")
+      ("man"               ""         "Man Page"                 "n")
+      ("markdown"          ".md"      "Markdown"                 "m")
+      ("markdown_github"   ".md"      "Markdown (Github)"        "G")
+      ("markdown_mmd"      ".md"      "Markdown (MMD)"           "M")
+      ("markdown_phpextra" ".md"      "Markdown (PHPExtra)"      "P")
+      ("markdown_strict"   ".md"      "Markdown (Strict)"        "S")
+      ("mediawiki"         ".mw"      "MediaWiki"                "w")
+      ("docx"              ".docx"    "MS Word (docx)"           "d")
+      ("native"            ".hs"      "Native Haskell"           "N")
+      ("opendocument"      ".odf"     "OpenDocument XML"         "p")
+      ("odt"               ".odt"     "OpenOffice Text Document" "L")
+      ("opml"              ".opml"    "OPML"                     "O")
+      ("org"               ".org"     "Org-mode"                 "o")
+      ("plain"             ".txt"     "Plain Text"               "t")
+      ("rst"               ".rst"     "reStructuredText"         "r")
+      ("revealjs"          ".html"    "RevealJS Slide Show"      "J")
+      ("rtf"               ".rtf"     "Rich Text Format"         "R")
+      ("s5"                ".html"    "S5 HTML/JS Slide Show"    "s")
+      ("slideous"          ".html"    "Slideous Slide Show"      "u")
+      ("slidy"             ".html"    "Slidy Slide Show"         "y")
+      ("texinfo"           ".texi"    "TeXinfo"                  "i")
+      ("textile"           ".textile" "Textile"                  "T"))
+    "List of Pandoc output formats and their associated file extensions.
 The file extension should include a dot. The description appears
 in the menu. Note that it does not make sense to change the names
 of the output formats, since Pandoc only recognizes the ones
 listed here. It is possible to customize the extensions and the
 descriptions, though, and you can remove output formats you don't
 use, if you want to unclutter the menu a bit."
-  :group 'pandoc
-  :type '(repeat :tag "Output Format" (list (string :tag "Format") (string :tag "Extension") (string :tag "Description") (string :tag "Shortcut key")))
-  :set 'pandoc--set-output-formats)
+    :group 'pandoc
+    :type '(repeat :tag "Output Format" (list (string :tag "Format") (string :tag "Extension") (string :tag "Description") (string :tag "Shortcut key")))
+    :set 'pandoc--set-output-formats)
 
-(eval-and-compile
   (defvar pandoc--extensions
     '(("footnotes"                           ("markdown" "markdown_phpextra"))
       ("inline_notes"                        ("markdown"))
@@ -254,7 +257,9 @@ use, if you want to unclutter the menu a bit."
       ("yaml_metadata_block"                 ("markdown"))
       ("ascii_identifiers"                   ("markdown_github"))
       ("lists_without_preceding_blankline"   ("markdown_github")))
-    "List of Markdown extensions supported by Pandoc."))
+    "List of Markdown extensions supported by Pandoc.")
+
+  ) ; eval-and-compile
 
 (defvar pandoc--cli-options nil
   "List of Pandoc command-line options that do not need special treatment.
@@ -1690,10 +1695,15 @@ If TRIM is `t', each row is trimmed to its widest member."
            (cols (-partition-all n-rows (--map (format fmt-str it) strings))))
       (if trim
           (setq cols (-map #'pandoc--trim-right-padding cols)))
-      (mapconcat (lambda (line)
-                   (mapconcat #'identity line colsep))
-                 (apply #'-zip-fill "" cols)
-                 "\n")))
+      (let ((rows (apply #'-zip-fill "" cols)))
+        (if (atom (cdar rows)) ; -zip-fill returns cons cells if it zips two lists
+            (setq rows (mapc (lambda (c)
+                               (setcdr c (list (cdr c))))
+                             rows)))
+        (mapconcat (lambda (line)
+                     (mapconcat #'identity line colsep))
+                   rows
+                   "\n"))))
 
   (defun pandoc--tabulate-extensions (rw)
     "Tabulate extension strings as a new string.
@@ -1710,6 +1720,11 @@ insert."
                            extensions)))
       (pandoc--tabulate strings t (+ 5 colwidth) nil "%s" nil)))
 
+  (defun pandoc--tabulate-input-formats ()
+    "Tabulate input formats for `pandoc-input-format-hydra'."
+    (let ((strings (--map (concat "_" (caddr it) "_: " (cadr it)) pandoc--input-formats)))
+      (pandoc--tabulate strings t nil 70)))
+  
   (defun pandoc--tabulate-output-formats ()
     "Tabulate output formats for `pandoc-output-format-hydra'."
     (let ((strings (--map (concat "_" (cadddr it) "_: " (caddr it)) pandoc-output-formats)))
@@ -1717,15 +1732,14 @@ insert."
 
   ) ; eval-and-compile
 
-;; (defmacro define-pandoc-hydra (name spec docstring heads)
-;;   "Define a pandoc-mode hydra."
-;;   (let ((tmp (make-symbol "hds"))
-;;         (tempheads heads))
-;;     `(let ((,tmp ,tempheads))
-;;        (defhydra ,name ,spec 
-;;          ,docstring
-;;          ,@(--map (list (cadddr it) (list 'pandoc-set-write (car it)))
-;;                   tmp)))))
+(defmacro define-pandoc-hydra (name body docstring hexpr &rest extra-heads)
+  "Define a pandoc-mode hydra.
+NAME, BODY and DOCSTRING are as in `defhydra'. HEXPR is ab expression that is evaluated and should yield a list of hydra heads. EXTRA-HEADS collects "
+  (let ((heads (eval hexpr)))
+    `(defhydra ,name ,body
+       ,docstring
+       ,@heads
+       ,@extra-heads)))
 
 (defhydra pandoc-main-hydra (:foreign-keys warn :exit t :hint nil)
   "
@@ -1743,7 +1757,7 @@ _w_: Switches
   ("V" pandoc-view-output)
   ("S" pandoc-view-settings)
   ("i" pandoc-input-format-hydra/body)
-  ("o" pandoc-set-write nil :exit)
+  ("o" pandoc-output-format-hydra/body)
   ("s" pandoc-settings-file-hydra/body)
   ("e" pandoc-@-hydra/body)
   ("f" pandoc-file-hydra/body)
@@ -1753,7 +1767,7 @@ _w_: Switches
 
 (defhydra pandoc-input-format-hydra (:foreign-keys warn :exit t :hint nil)
   "
-Input format: %(pandoc--get 'read)
+Input format: %s(pandoc--get 'read)
 
 _N_: Native Haskell               _O_: OPML
 _m_: Pandoc Markdown              _t_: Textile
@@ -1765,7 +1779,7 @@ _r_: reStructuredText             _k_: Haddock Markup
 _h_: HTML                         _w_: MediaWiki
 _d_: docx                         _j_: JSON
 -----------------------------------------------------
-_E_: Extensions
+_X_: Extensions
 
 "
   ("N" (pandoc-set-read "native"))
@@ -1786,15 +1800,35 @@ _E_: Extensions
   ("x" (pandoc-set-read "t2t"))
   ("T" (pandoc-set-read "twiki"))
   ("k" (pandoc-set-read "haddock"))
-  ("E" pandoc-read-exts-hydra/body)
+  ("X" pandoc-read-exts-hydra/body)
   ("q" nil "Cancel")
   ("b" pandoc-main-hydra/body "Back to main menu"))
 
-;; (define-pandoc-hydra pandoc-output-format-hydra (:foreign-keys warn :exit t :hint nil)
-;;   (concat "\n" (pandoc--tabulate-output-formats) "\n\n")
-;;   (--map (cons (cadddr it) (car it)) pandoc-output-formats))
+(define-pandoc-hydra pandoc-input-format-hydra (:foreign-keys warn :exit t :hint nil)
+  (concat "Input format: %s(pandoc--get 'read)\n\n"
+          (pandoc--tabulate-input-formats)
+          "\n"
+          (make-string 50 ?-)
+          "\n"
+          "_X_: Extensions\n\n")
+  (--map (list (caddr it) (list 'pandoc-set-read (car it)))
+         pandoc--input-formats)
+  ("X" pandoc-read-exts-hydra/body)
+  ("q" nil "Cancel")
+  ("b" pandoc-main-hydra/body "Back to main menu"))
 
-;; (defhydra pandoc-output-format-hydra )
+(define-pandoc-hydra pandoc-output-format-hydra (:foreign-keys warn :exit t :hint nil)
+  (concat "Output format: %s(pandoc--get 'write)\n\n"
+          (pandoc--tabulate-output-formats)
+          "\n"
+          (make-string 50 ?-)
+          "\n"
+          "_X_: Extensions\n\n")
+  (--map (list (cadddr it) (list 'pandoc-set-write (car it)))
+         pandoc-output-formats)
+  ("X" pandoc-write-exts-hydra/body)
+  ("q" nil "Cancel")
+  ("b" pandoc-main-hydra/body "Back to main menu"))
 
 (defhydra pandoc-file-hydra (:foreign-keys warn :exit t :hint nil)
   "
