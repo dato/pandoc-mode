@@ -43,8 +43,6 @@
 
 ;;; Code:
 
-;; pandoc--set, pandoc--get, pandoc--remove-from-list-option
-
 (defun nonempty (string)
   "Return STRING, unless it is \"\", in which case return NIL."
   (when (not (string= string ""))
@@ -272,9 +270,9 @@ relative paths, the file's working directory is used as base
 directory. two options are preset, others are added by
 `define-pandoc-file-option'.")
 
-(defvar pandoc--binary-options nil
+(defvar pandoc--switches nil
   "List of binary options.
-These are set by `define-pandoc-binary-option'.")
+These are set by `define-pandoc-switch'.")
 
 (defvar pandoc--list-options nil
   "List of options that have a list as value.
@@ -325,11 +323,16 @@ Make sure that `pandoc--output-buffer' really exists."
      (with-current-buffer pandoc--output-buffer
        ,@body)))
 
-(defun pandoc--pp-binary-option (option)
-  "Return a pretty-printed representation of a binary option."
+(defun pandoc--pp-switch (option)
+  "Return a pretty-printed representation of a switch."
   (if (pandoc--get option)
       "yes"
     "no"))
+
+(defun pandoc--pp-option (option)
+  "Return an pretty-printed representation of an option."
+  (or (pandoc--get option)
+      ""))
 
 (defun pandoc--get (option &optional buffer)
   "Returns the value of OPTION.
@@ -443,18 +446,18 @@ write extension is to be queried."
                             (pandoc--get 'read-extensions)
                           (pandoc--get 'write-extensions)))))
 
-(defmacro define-pandoc-binary-option (option hydra description)
+(defmacro define-pandoc-switch (option hydra description)
   "Create a binary option.
 OPTION must be a symbol and must be identical to the long form of
 the pandoc option (without dashes). DESCRIPTION is the
 description of the option as it will appear in the menu."
   (declare (indent defun))
   `(progn
-     (add-to-list 'pandoc--binary-options (cons ,description (quote ,option)) t)
+     (add-to-list 'pandoc--switches (cons ,description (quote ,option)) t)
      (add-to-list 'pandoc--cli-options (quote ,option) t)
      (add-to-list 'pandoc--options (list (quote ,option)) t)
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
-                  (quote ,(list (concat "_" (cadr hydra) "_: " description (format " [%%s(pandoc--pp-binary-option '%s)]" option))
+                  (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) description) (format " [%%s(pandoc--pp-switch '%s)]" option))
                                 (cadr hydra)
                                 `(pandoc--toggle (quote ,option))))
                   t)))
@@ -505,7 +508,7 @@ the option can have a default value."
                                               :selected `(stringp (pandoc--get (quote ,option)))))))
                   t) ; add to the end of `pandoc--options-menu'
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
-                  (quote ,(list (concat "_" (cadr hydra) "_: " prompt (format " [%%s(pandoc--get '%s)]" option))
+                  (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) prompt) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
                   t) ; add to the end of `pandoc--*-hydra-list'.
@@ -551,7 +554,7 @@ formulated in such a way that the strings \"Default \" and \"Set
                                  :selected `(pandoc--get (quote ,option))))
                   t) ; add to the end of `pandoc--options-menu'
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
-                  (quote ,(list (concat "_" (cadr hydra) "_: " prompt (format " [%%s(pandoc--get '%s)]" option))
+                  (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) prompt) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
                   t) ; add to the end of `pandoc--*-hydra-list'.
@@ -602,7 +605,7 @@ or T and indicates whether the option can have a default value."
                                               :selected `(stringp (pandoc--get (quote ,option)))))))
                   t) ; add to the end of `pandoc--options-menu'
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
-                  (quote ,(list (concat "_" (cadr hydra) "_: " prompt (format " [%%s(pandoc--get '%s)]" option))
+                  (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) prompt) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
                   t) ; add to the end of `pandoc--*-hydra-list'.
@@ -643,7 +646,7 @@ it."
                                  :active `(pandoc--get (quote ,option))))
                   t)              ; add to the end of `pandoc--{options|files}-menu'
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
-                  (quote ,(list (concat "_" (cadr hydra) "_: " description (format " [%%s(pandoc--get '%s)]" option))
+                  (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) description) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
                   t) ; add to the end of `pandoc--*-hydra-list'.
@@ -690,7 +693,7 @@ before it."
                                  :active t))
                   t)              ; add to the end of `pandoc--options-menu'
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
-                  (quote ,(list (concat "_" (cadr hydra) "_: " description (format " [%%s(pandoc--get '%s)]" option))
+                  (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) description) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
                   t) ; add to the end of `pandoc--*-hydra-list'.
@@ -743,7 +746,7 @@ menu."
                                                         (cdr choices)))
                   t)              ; add to the end of `pandoc--options-menu'
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
-                  (quote ,(list (concat "_" (cadr hydra) "_: " prompt (format " [%%s(pandoc--get '%s)]" option))
+                  (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) prompt) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
                   t) ; add to the end of `pandoc--*-hydra-list'.
@@ -868,94 +871,94 @@ evaluated."
 (defvar pandoc--math-hydra-list nil)
 
 ;;; Reader options
-(define-pandoc-binary-option        parse-raw               (reader "r") "Parse Raw")
-(define-pandoc-binary-option        smart                   (reader "s") "Smart")
-(define-pandoc-binary-option        strict                  (reader "S") "Strict")
-(define-pandoc-binary-option        old-dashes              (reader "o") "Use Old-style Dashes")
-(define-pandoc-number-option        base-header-level       (reader "b") "Base Header Level")
-(define-pandoc-string-option        indented-code-classes   (reader "c") "Indented Code Classes")
-(define-pandoc-string-option        default-image-extension (reader "i") "Default Image Extension")
-(define-pandoc-list-option file     filter                  (reader "f") "Filters" "Filter")
-(define-pandoc-alist-option string  metadata                (reader "m") "Metadata" "Metadata item")
-(define-pandoc-binary-option        normalize               (reader "n") "Normalize Document")
-(define-pandoc-binary-option        preserve-tabs           (reader "p") "Preserve Tabs")
-(define-pandoc-number-option        tab-stop                (reader "t") "Tab Stop Width")
-(define-pandoc-choice-option        track-changes           (reader "T") "Track Changes" ("accept" "reject" "all") ("docx"))
+(define-pandoc-switch               parse-raw               (reader "r" "%-23s") "Parse Raw")
+(define-pandoc-switch               smart                   (reader "s" "%-23s") "Smart")
+(define-pandoc-switch               strict                  (reader "S" "%-23s") "Strict")
+(define-pandoc-switch               old-dashes              (reader "o" "%-23s") "Use Old-style Dashes")
+(define-pandoc-number-option        base-header-level       (reader "h" "%-23s") "Base Header Level")
+(define-pandoc-string-option        indented-code-classes   (reader "c" "%-23s") "Indented Code Classes")
+(define-pandoc-string-option        default-image-extension (reader "i" "%-23s") "Default Image Extension")
+(define-pandoc-list-option file     filter                  (reader "f" "%-23s") "Filters" "Filter")
+(define-pandoc-alist-option string  metadata                (reader "m" "%-23s") "Metadata" "Metadata item")
+(define-pandoc-switch               normalize               (reader "n" "%-23s") "Normalize Document")
+(define-pandoc-switch               preserve-tabs           (reader "p" "%-23s") "Preserve Tabs")
+(define-pandoc-number-option        tab-stop                (reader "t" "%-23s") "Tab Stop Width")
+(define-pandoc-choice-option        track-changes           (reader "T" "%-23s") "Track Changes" ("accept" "reject" "all") ("docx"))
 ;; extract-media
 
 ;; TODO for data-dir, output-dir and extract-media, a macro define-pandoc-dir-option might be useful.
 
 
 ;;; General writer options
-(define-pandoc-binary-option        standalone          (writer "s") "Standalone")
-(define-pandoc-file-option          template            (writer "t") "Template File" 'full-path)
-(define-pandoc-alist-option string  variable            (writer "v") "Variables" "Variable")
-(define-pandoc-binary-option        no-wrap             (writer "w") "No Wrap")
-(define-pandoc-number-option        columns             (writer "c") "Column Width")
-(define-pandoc-binary-option        table-of-contents   (writer "T") "Table of Contents")
-(define-pandoc-number-option        toc-depth           (writer "D") "TOC Depth")
-(define-pandoc-binary-option        no-highlight        (writer "h") "No Highlighting")
-(define-pandoc-string-option        highlight-style     (writer "S") "Highlighting Style")
-(define-pandoc-file-option          include-in-header   (writer "H") "Include Header" 'full-path)
-(define-pandoc-file-option          include-before-body (writer "B") "Include Before Body" 'full-path)
-(define-pandoc-file-option          include-after-body  (writer "A") "Include After Body" 'full-path)
+(define-pandoc-switch               standalone          (writer "s" "%-19s") "Standalone")
+(define-pandoc-file-option          template            (writer "t" "%-19s") "Template File"       'full-path)
+(define-pandoc-alist-option string  variable            (writer "v" "%-19s") "Variables"           "Variable")
+(define-pandoc-switch               no-wrap             (writer "w" "%-19s") "No Wrap")
+(define-pandoc-number-option        columns             (writer "c" "%-19s") "Column Width")
+(define-pandoc-switch               table-of-contents   (writer "T" "%-19s") "Table of Contents")
+(define-pandoc-number-option        toc-depth           (writer "D" "%-19s") "TOC Depth")
+(define-pandoc-switch               no-highlight        (writer "h" "%-19s") "No Highlighting")
+(define-pandoc-string-option        highlight-style     (writer "S" "%-19s") "Highlighting Style")
+(define-pandoc-file-option          include-in-header   (writer "H" "%-19s") "Include Header"      'full-path)
+(define-pandoc-file-option          include-before-body (writer "B" "%-19s") "Include Before Body" 'full-path)
+(define-pandoc-file-option          include-after-body  (writer "A" "%-19s") "Include After Body"  'full-path)
 ;; print-default-template ; not actually included
 
 
 ;;; Options affecting specific writers
 
 ;; general
-(define-pandoc-binary-option  reference-links (specific "r") "Reference Links")
-(define-pandoc-binary-option  atx-headers     (specific "a") "Use ATX-style Headers")
-(define-pandoc-binary-option  number-sections (specific "n") "Number Sections")
-(define-pandoc-binary-option  incremental     (specific "i") "Incremental")
-(define-pandoc-number-option  slide-level     (specific "h") "Slide Level Header")
-(define-pandoc-file-option    reference-odt   (specific "o") "Reference ODT File" 'full-path)
-(define-pandoc-file-option    reference-docx  (specific "d") "Reference docx File" 'full-path)
+(define-pandoc-switch         reference-links (specific "r" "%-21s") "Reference Links")
+(define-pandoc-switch         atx-headers     (specific "a" "%-21s") "Use ATX-style Headers")
+(define-pandoc-switch         number-sections (specific "n" "%-21s") "Number Sections")
+(define-pandoc-switch         incremental     (specific "i" "%-21s") "Incremental")
+(define-pandoc-number-option  slide-level     (specific "h" "%-21s") "Slide Level Header")
+(define-pandoc-file-option    reference-odt   (specific "o" "%-21s") "Reference ODT File"  'full-path)
+(define-pandoc-file-option    reference-docx  (specific "d" "%-21st") "Reference docx File" 'full-path)
 
 ;; html-based
-(define-pandoc-binary-option  self-contained    (html "s") "Self-contained Document")
-(define-pandoc-binary-option  html-q-tags       (html "q") "Use <q> Tags for Quotes in HTML")
-(define-pandoc-binary-option  ascii             (html "a") "Use Only ASCII in HTML")
-(define-pandoc-string-option  number-offset     (html "o") "Number Offsets")
-(define-pandoc-binary-option  section-divs      (html "d") "Wrap Sections in <div> Tags")
-(define-pandoc-choice-option  email-obfuscation (html "e") "Email Obfuscation" ("none" "javascript" "references") ("html" "html5" "s5" "slidy" "slideous" "dzslides" "revealjs"))
-(define-pandoc-string-option  title-prefix      (html "t") "Title prefix") 
-(define-pandoc-file-option    css               (html "c") "CSS Style Sheet")
-(define-pandoc-string-option  id-prefix         (html "i") "ID prefix")
+(define-pandoc-switch         self-contained    (html "s" "%-31s") "Self-contained Document")
+(define-pandoc-switch         html-q-tags       (html "q" "%-31s") "Use <q> Tags for Quotes in HTML")
+(define-pandoc-switch         ascii             (html "a" "%-31s") "Use Only ASCII in HTML")
+(define-pandoc-string-option  number-offset     (html "o" "%-31s") "Number Offsets")
+(define-pandoc-switch         section-divs      (html "d" "%-31s") "Wrap Sections in <div> Tags")
+(define-pandoc-choice-option  email-obfuscation (html "e" "%-31s") "Email Obfuscation" ("none" "javascript" "references") ("html" "html5" "s5" "slidy" "slideous" "dzslides" "revealjs"))
+(define-pandoc-string-option  title-prefix      (html "t" "%-31s") "Title prefix") 
+(define-pandoc-file-option    css               (html "c" "%-31s") "CSS Style Sheet")
+(define-pandoc-string-option  id-prefix         (html "i" "%-31s") "ID prefix")
 
 ;; TeX-based (LaTeX, ConTeXt)
-(define-pandoc-binary-option  chapters         (tex "c") "Top-level Headers Are Chapters")
-(define-pandoc-binary-option  no-tex-ligatures (tex "l") "Do Not Use TeX Ligatures")
-(define-pandoc-binary-option  listings         (tex "L") "Use LaTeX listings Package")
-(define-pandoc-choice-option  latex-engine     (tex "e") "LaTeX Engine" ("pdflatex" "xelatex" "lualatex") ("latex" "beamer" "context"))
+(define-pandoc-switch         chapters         (tex "c" "%-30s") "Top-level Headers Are Chapters")
+(define-pandoc-switch         no-tex-ligatures (tex "l" "%-30s") "Do Not Use TeX Ligatures")
+(define-pandoc-switch         listings         (tex "L" "%-30s") "Use LaTeX listings Package")
+(define-pandoc-choice-option  latex-engine     (tex "e" "%-30s") "LaTeX Engine" ("pdflatex" "xelatex" "lualatex") ("latex" "beamer" "context"))
 
 ;; epub
-(define-pandoc-file-option       epub-stylesheet    (epub "s") "EPUB Style Sheet" 'full-path 'default)
-(define-pandoc-file-option       epub-cover-image   (epub "C") "EPUB Cover Image" 'full-path)
-(define-pandoc-file-option       epub-metadata      (epub "m") "EPUB Metadata File" 'full-path)
-(define-pandoc-list-option file  epub-embed-font    (epub "f") "EPUB Fonts" "EPUB Embedded Font")
-(define-pandoc-number-option     epub-chapter-level (epub "c") "EPub Chapter Level")
+(define-pandoc-file-option       epub-stylesheet    (epub "s" "%-18s") "EPUB Style Sheet"   'full-path 'default)
+(define-pandoc-file-option       epub-cover-image   (epub "C" "%-18s") "EPUB Cover Image"   'full-path)
+(define-pandoc-file-option       epub-metadata      (epub "m" "%-18s") "EPUB Metadata File" 'full-path)
+(define-pandoc-list-option file  epub-embed-font    (epub "f" "%-18s") "EPUB Fonts"         "EPUB Embedded Font")
+(define-pandoc-number-option     epub-chapter-level (epub "c" "%-18s") "EPub Chapter Level")
 
 
 ;;; Citation rendering
-(define-pandoc-list-option file  bibliography           (citations "b") "Bibliography Files" "Bibliography File")
-(define-pandoc-file-option       csl                    (citations "c") "CSL File" 'full-path)
-(define-pandoc-file-option       citation-abbreviations (citations "a") "Citation Abbreviations File" 'full-path)
-(define-pandoc-binary-option     natbibdd               (citations "n") "Use NatBib")
-(define-pandoc-binary-option     biblatex               (citations "l") "Use BibLaTeX")
+(define-pandoc-list-option file  bibliography           (citations "B" "%-27s") "Bibliography Files"          "Bibliography File")
+(define-pandoc-file-option       csl                    (citations "c" "%-27s") "CSL File"                    'full-path)
+(define-pandoc-file-option       citation-abbreviations (citations "a" "%-27s") "Citation Abbreviations File" 'full-path)
+(define-pandoc-switch            natbib                 (citations "n" "%-27s") "Use NatBib")
+(define-pandoc-switch            biblatex               (citations "l" "%-27s") "Use BibLaTeX")
 
 
 ;;; Math rendering in HTML
-(define-pandoc-string-option  latexmathml      (math "L") "LaTeXMathML URL" 'default)
-(define-pandoc-string-option  mathml           (math "m") "MathML URL" 'default)
-(define-pandoc-string-option  jsmath           (math "j") "jsMath URL" 'default)
-(define-pandoc-string-option  mathjax          (math "J") "MathJax URL" 'default)
-(define-pandoc-binary-option  gladtex          (math "g") "gladTeX")
-(define-pandoc-string-option  mimetex          (math "m") "MimeTeX CGI Script" 'default)
-(define-pandoc-string-option  webtex           (math "w") "WebTeX URL" 'default)
-(define-pandoc-string-option  katex            (math "k") "KaTeX URL" 'default)
-(define-pandoc-string-option  katex-stylesheet (math "K") "KaTeX Stylesheet" 'default)
+(define-pandoc-string-option  latexmathml      (math "L" "%-18s") "LaTeXMathML URL"    'default)
+(define-pandoc-string-option  mathml           (math "m" "%-18s") "MathML URL"         'default)
+(define-pandoc-string-option  jsmath           (math "j" "%-18s") "jsMath URL"         'default)
+(define-pandoc-string-option  mathjax          (math "J" "%-18s") "MathJax URL"        'default)
+(define-pandoc-switch         gladtex          (math "g" "%-18s") "gladTeX")
+(define-pandoc-string-option  mimetex          (math "m" "%-18s") "MimeTeX CGI Script" 'default)
+(define-pandoc-string-option  webtex           (math "w" "%-18s") "WebTeX URL"         'default)
+(define-pandoc-string-option  katex            (math "k" "%-18s") "KaTeX URL"          'default)
+(define-pandoc-string-option  katex-stylesheet (math "K" "%-18s") "KaTeX Stylesheet"   'default)
 
 (provide 'pandoc-mode-utils)
 

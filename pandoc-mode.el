@@ -792,14 +792,14 @@ set. Without any prefix argument, the option is toggled."
                                                                      ((eq prefix '-) "Unset")
                                                                      ((null prefix) "Toggle")
                                                                      (t "Set")))
-                                              pandoc--binary-options nil t) pandoc--binary-options))))
+                                              pandoc--switches nil t) pandoc--switches))))
     (pandoc--set option (cond
                          ((eq prefix '-) nil)
                          ((null prefix) (not (pandoc--get option)))
                          (t t)))
-    (message "Option `%s' %s." (car (rassq option pandoc--binary-options)) (if (pandoc--get option)
-                                                                               "set"
-                                                                             "unset"))))
+    (message "Option `%s' %s." (car (rassq option pandoc--switches)) (if (pandoc--get option)
+                                                                         "set"
+                                                                       "unset"))))
 
 (easy-menu-define pandoc-mode-menu pandoc-mode-map "Pandoc menu"
   `("Pandoc"
@@ -899,7 +899,7 @@ set. Without any prefix argument, the option is toggled."
                          :active t
                          :style 'toggle
                          :selected `(pandoc--get (quote ,(cdr option)))))
-               pandoc--binary-options))))
+               pandoc--switches))))
 
 (easy-menu-add pandoc-mode-menu pandoc-mode-map)
 
@@ -907,27 +907,23 @@ set. Without any prefix argument, the option is toggled."
 
 (defhydra pandoc-main-hydra (:foreign-keys warn :exit t :hint nil)
   "
-_r_: Run Pandoc               _i_: Input format
-_p_: Convert to pdf           _o_: Output format
+_r_: Run Pandoc               _I_: Input format
+_p_: Convert to pdf           _O_: Output format
 _V_: View output buffer       _s_: Settings files
 _S_: View current settings    _e_: Example lists
--------------------------------------------------
-_f_: Files                    _O_: Options
-_w_: Switches
+_o_: Options
 
 "
   ("r" pandoc-run-pandoc)
   ("p" pandoc-convert-to-pdf)
   ("V" pandoc-view-output)
   ("S" pandoc-view-settings)
-  ("i" pandoc-input-format-hydra/body)
-  ("o" pandoc-output-format-hydra/body)
+  ("I" pandoc-input-format-hydra/body)
+  ("O" pandoc-output-format-hydra/body)
   ("s" pandoc-settings-file-hydra/body)
   ("e" pandoc-@-hydra/body)
-  ("f" pandoc-file-hydra/body)
-  ("w" pandoc-switches-hydra/body)
-  ("O" pandoc-options-hydra/body)
-  ("q" nil "Cancel"))
+  ("o" pandoc-options-hydra/body)
+  ("q" nil "Quit"))
 
 (define-pandoc-hydra pandoc-input-format-hydra (:foreign-keys warn :exit t :hint nil)
   (concat "Input format: %s(pandoc--get 'read)\n\n"
@@ -939,8 +935,8 @@ _w_: Switches
   (--map (list (caddr it) (list 'pandoc-set-read (car it)))
          pandoc--input-formats)
   ("X" pandoc-read-exts-hydra/body)
-  ("q" nil "Cancel")
-  ("b" pandoc-main-hydra/body "Back to main menu"))
+  ("q" nil "Quit")
+  ("b" pandoc-main-hydra/body "Back"))
 
 (define-pandoc-hydra pandoc-output-format-hydra (:foreign-keys warn :exit t :hint nil)
   (concat "Output format: %s(pandoc--get 'write)\n\n"
@@ -952,22 +948,71 @@ _w_: Switches
   (--map (list (cadddr it) (list 'pandoc-set-write (car it)))
          pandoc-output-formats)
   ("X" pandoc-write-exts-hydra/body)
-  ("q" nil "Cancel")
-  ("b" pandoc-main-hydra/body "Back to main menu"))
+  ("q" nil "Quit")
+  ("b" pandoc-main-hydra/body "Back"))
 
 (defhydra pandoc-file-hydra (:foreign-keys warn :exit t :hint nil)
   "
-_m_: Master file       [%(pandoc--get 'master-file)]
-_o_: Output file       [%(pandoc--get 'output)]
-_O_: Output directory  [%(pandoc--get 'output-dir)]
-_d_: Data directory    [%(pandoc--get 'data-dir)]
+_m_: Master file       [%s(pandoc--pp-option 'master-file)]
+_o_: Output file       [%s(pandoc--pp-option 'output)]
+_O_: Output directory  [%s(pandoc--pp-option 'output-dir)]
+_d_: Data directory    [%s(pandoc--pp-option 'data-dir)]
 
 "
   ("m" pandoc-set-master-file)
   ("o" pandoc-set-output)
   ("O" pandoc-set-output-dir)
   ("d" pandoc-set-data-dir)
-  ("q" nil "Cancel"))
+  ("q" nil "Quit")
+  ("b" pandoc-options-hydra/body "Back"))
+
+(defhydra pandoc-@-hydra (:foreign-keys warn :exit t :hint nil)
+  "
+_i_: Insert new example
+_s_: Select and insert example label
+
+"
+  ("i" pandoc-insert-@)
+  ("s" pandoc-select-@)
+  ("q" nil "Quit")
+  ("b" pandoc-main-hydra/body "Back"))
+
+(defun pandoc--extension-active-marker (extension rw)
+  "Return a marker indicating whether EXTENSION is active."
+  (if (pandoc--extension-active-p extension rw)
+      pandoc-extension-active-marker
+    pandoc-extension-inactive-marker))
+
+(defhydra pandoc-read-exts-hydra (:foreign-keys warn :exit t :hint nil)
+  (concat "\n" (pandoc--tabulate-extensions 'read) "\n\n<number> _t_: Toggle extension, _q_: Quit, _b_: Back")
+  ("t" pandoc-toggle-read-extension-by-number)
+  ("q" nil)
+  ("b" pandoc-input-format-hydra/body))
+
+(defhydra pandoc-write-exts-hydra (:foreign-keys warn :exit t :hint nil)
+  (concat "\n" (pandoc--tabulate-extensions 'write) "\n\n<number> _t_: Toggle extension, _q_: Quit, _b_: Back")
+  ("t" pandoc-toggle-write-extension-by-number)
+  ("q" nil)
+  ("b" pandoc-output-format-hydra/body))
+
+(defhydra pandoc-options-hydra (:foreign-keys warn :exit t :hint nil)
+  "
+_f_: Files
+_r_: Reader options
+_w_: General writer options
+_s_: Options for specific writers
+_c_: Citations
+_m_: Math rendering
+
+"
+  ("f" pandoc-file-hydra/body)
+  ("r" pandoc-reader-options-hydra/body)
+  ("w" pandoc-writer-options-hydra/body)
+  ("s" pandoc-specific-options-hydra/body)
+  ("c" pandoc-citations-hydra/body)
+  ("m" pandoc-math-hydra/body)
+  ("q" nil "Quit")
+  ("b" pandoc-main-hydra/body "Back"))
 
 (defhydra pandoc-settings-file-hydra (:foreign-keys warn :exit t :hint nil)
   "
@@ -981,33 +1026,82 @@ _r_: Revert settings
   ("p" pandoc-save-project-file)
   ("g" pandoc-save-global-settings-file)
   ("r" pandoc-revert-settings)
-  ("q" nil "Cancel"))
+  ("q" nil "Quit")
+  ("b" pandoc-main-hydra/body "Back"))
 
-(defhydra pandoc-@-hydra (:foreign-keys warn :exit t :hint nil)
-  "
-_i_: Insert new example
-_s_: Select and insert example label
+(define-pandoc-hydra pandoc-reader-options-hydra (:foreign-keys warn :hint nil)
+  (concat "\n"
+          (mapconcat #'car pandoc--reader-hydra-list "\n")
+          "\n\n")
+  (mapcar #'cdr pandoc--reader-hydra-list)
+  ("q" nil "Quit")
+  ("b" pandoc-options-hydra/body "Back" :exit t))
 
-"
-  ("i" pandoc-insert-@)
-  ("s" pandoc-select-@)
-  ("q" nil "Cancel"))
+(define-pandoc-hydra pandoc-writer-options-hydra (:foreign-keys warn :hint nil)
+  (concat "\n"
+          (mapconcat #'car pandoc--writer-hydra-list "\n")
+          "\n\n")
+  (mapcar #'cdr pandoc--writer-hydra-list)
+  ("q" nil "Quit")
+  ("b" pandoc-options-hydra/body "Back" :exit t))
 
-(defun pandoc--extension-active-marker (extension rw)
-  "Return a marker indicating whether EXTENSION is active."
-  (if (pandoc--extension-active-p extension rw)
-      pandoc-extension-active-marker
-    pandoc-extension-inactive-marker))
+(define-pandoc-hydra pandoc-specific-options-hydra (:foreign-keys warn :hint nil)
+  (concat "\n"
+          (mapconcat #'car pandoc--specific-hydra-list "\n")
+          "\n"
+          (make-string 50 ?-)
+          "\n"
+          "_H_: HTML-based writers\n"
+          "_T_: TeX-based writers\n"
+          "_E_: Epub"
+          "\n\n")
+  (mapcar #'cdr pandoc--specific-hydra-list)
+  ("H" pandoc-html-options-hydra/body :exit t)
+  ("T" pandoc-tex-options-hydra/body :exit t)
+  ("E" pandoc-epub-options-hydra/body :exit t)
+  ("q" nil "Quit")
+  ("b" pandoc-options-hydra/body "Back" :exit t))
 
-(defhydra pandoc-read-exts-hydra ()
-  (concat "\n" (pandoc--tabulate-extensions 'read) "\n\n<number> _t_: Toggle extension, _q_: quit")
-  ("t" pandoc-toggle-read-extension-by-number nil)
-  ("q" nil nil))
+(define-pandoc-hydra pandoc-html-options-hydra (:foreign-keys warn :hint nil)
+  (concat "\n"
+          (mapconcat #'car pandoc--html-hydra-list "\n")
+          "\n\n")
+  (mapcar #'cdr pandoc--html-hydra-list)
+  ("q" nil "Quit")
+  ("b" pandoc-specific-options-hydra/body "Back" :exit t))
 
-(defhydra pandoc-write-exts-hydra ()
-  (concat "\n" (pandoc--tabulate-extensions 'write) "\n\n<number> _t_: Toggle extension, _q_: quit")
-  ("t" pandoc-toggle-write-extension-by-number nil)
-  ("q" nil nil))
+(define-pandoc-hydra pandoc-tex-options-hydra (:foreign-keys warn :hint nil)
+  (concat "\n"
+          (mapconcat #'car pandoc--tex-hydra-list "\n")
+          "\n\n")
+  (mapcar #'cdr pandoc--tex-hydra-list)
+  ("q" nil "Quit")
+  ("b" pandoc-specific-options-hydra/body "Back" :exit t))
+
+(define-pandoc-hydra pandoc-epub-options-hydra (:foreign-keys warn :hint nil)
+  (concat "\n"
+          (mapconcat #'car pandoc--epub-hydra-list "\n")
+          "\n\n")
+  (mapcar #'cdr pandoc--epub-hydra-list)
+  ("q" nil "Quit")
+  ("b" pandoc-specific-options-hydra/body "Back" :exit t))
+
+(define-pandoc-hydra pandoc-citations-hydra (:foreign-keys warn :hint nil)
+  (concat "\n"
+          (mapconcat #'car pandoc--citations-hydra-list "\n")
+          "\n\n")
+  (mapcar #'cdr pandoc--citations-hydra-list)
+  ("q" nil "Quit")
+  ("b" pandoc-options-hydra/body "Back" :exit t))
+
+(define-pandoc-hydra pandoc-math-hydra (:foreign-keys warn :hint nil)
+  (concat "\n"
+          (mapconcat #'car pandoc--math-hydra-list "\n")
+          "\n\n")
+  (mapcar #'cdr pandoc--math-hydra-list)
+  ("q" nil "Quit")
+  ("b" pandoc-options-hydra/body "Back" :exit t))
+
 
 ;;; Faces:
 ;;; Regexp based on github.com/vim-pandoc/vim-pandoc-syntax.
