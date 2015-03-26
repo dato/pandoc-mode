@@ -857,7 +857,7 @@ insert."
 
 (defun pandoc--tabulate-output-formats ()
   "Tabulate output formats for `pandoc-output-format-hydra'."
-  (let ((strings (--map (concat "_" (cadddr it) "_: " (caddr it)) pandoc--output-formats)))
+  (let ((strings (--map (concat "_" (caddr it) "_: " (cadr it)) pandoc--output-formats)))
     (pandoc--tabulate strings t nil 150)))
 
 (defmacro define-pandoc-hydra (name body docstring hexpr &rest extra-heads)
