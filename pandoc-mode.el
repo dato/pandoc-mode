@@ -956,12 +956,14 @@ _o_: Options
 _s_: Save file settings
 _p_: Save project file
 _g_: Save global settings file
+_d_: Set current format as default
 _r_: Revert settings
 
 "
   ("s" pandoc-save-settings-file)
   ("p" pandoc-save-project-file)
   ("g" pandoc-save-global-settings-file)
+  ("d" pandoc-set-default-format)
   ("r" pandoc-revert-settings)
   ("q" nil "Quit")
   ("b" pandoc-main-hydra/body "Back" :exit t))
