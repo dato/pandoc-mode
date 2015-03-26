@@ -914,7 +914,7 @@ evaluated."
 (define-pandoc-switch         incremental     (specific "i" "%-21s") "Incremental")
 (define-pandoc-number-option  slide-level     (specific "h" "%-21s") "Slide Level Header")
 (define-pandoc-file-option    reference-odt   (specific "o" "%-21s") "Reference ODT File"  'full-path)
-(define-pandoc-file-option    reference-docx  (specific "d" "%-21st") "Reference docx File" 'full-path)
+(define-pandoc-file-option    reference-docx  (specific "d" "%-21s") "Reference docx File" 'full-path)
 
 ;; html-based
 (define-pandoc-switch         self-contained    (html "s" "%-31s") "Self-contained Document")
