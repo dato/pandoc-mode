@@ -945,8 +945,8 @@ _o_: Options
           (make-string 50 ?-)
           "\n"
           "_X_: Extensions\n\n")
-  (--map (list (cadddr it) (list 'pandoc-set-write (car it)))
-         pandoc-output-formats)
+  (--map (list (caddr it) (list 'pandoc-set-write (car it)))
+         pandoc--output-formats)
   ("X" pandoc-write-exts-hydra/body)
   ("q" nil "Quit")
   ("b" pandoc-main-hydra/body "Back" :exit t))

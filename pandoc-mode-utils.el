@@ -222,8 +222,7 @@ not make sense to change the names of the output formats, since
 Pandoc only recognizes the ones listed here. However, it is
 possible to customize the extensions."
   :group 'pandoc
-  :type '(repeat :tag "Output Format" (list (string :tag "Format") (string :tag "Extension")))
-  :set 'pandoc--set-output-formats)
+  :type '(repeat :tag "Output Format" (list (string :tag "Format") (string :tag "Extension"))))
 
 (defvar pandoc--extensions
   '(("footnotes"                           ("markdown" "markdown_phpextra"))
@@ -858,7 +857,7 @@ insert."
 
 (defun pandoc--tabulate-output-formats ()
   "Tabulate output formats for `pandoc-output-format-hydra'."
-  (let ((strings (--map (concat "_" (cadddr it) "_: " (caddr it)) pandoc-output-formats)))
+  (let ((strings (--map (concat "_" (cadddr it) "_: " (caddr it)) pandoc--output-formats)))
     (pandoc--tabulate strings t nil 150)))
 
 (defmacro define-pandoc-hydra (name body docstring hexpr &rest extra-heads)
