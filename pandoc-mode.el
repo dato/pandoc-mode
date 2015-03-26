@@ -938,7 +938,7 @@ _o_: Options
   ("q" nil "Quit")
   ("b" pandoc-main-hydra/body "Back"))
 
-(define-pandoc-hydra pandoc-output-format-hydra (:foreign-keys warn :exit t :hint nil)
+(define-pandoc-hydra pandoc-output-format-hydra (:foreign-keys warn :hint nil)
   (concat "Output format: %s(pandoc--get 'write)\n\n"
           (pandoc--tabulate-output-formats)
           "\n"
@@ -949,22 +949,22 @@ _o_: Options
          pandoc-output-formats)
   ("X" pandoc-write-exts-hydra/body)
   ("q" nil "Quit")
-  ("b" pandoc-main-hydra/body "Back"))
+  ("b" pandoc-main-hydra/body "Back" :exit t))
 
-(defhydra pandoc-file-hydra (:foreign-keys warn :exit t :hint nil)
+(defhydra pandoc-settings-file-hydra (:foreign-keys warn :hint nil)
   "
-_m_: Master file       [%s(pandoc--pp-option 'master-file)]
-_o_: Output file       [%s(pandoc--pp-option 'output)]
-_O_: Output directory  [%s(pandoc--pp-option 'output-dir)]
-_d_: Data directory    [%s(pandoc--pp-option 'data-dir)]
+_s_: Save file settings
+_p_: Save project file
+_g_: Save global settings file
+_r_: Revert settings
 
 "
-  ("m" pandoc-set-master-file)
-  ("o" pandoc-set-output)
-  ("O" pandoc-set-output-dir)
-  ("d" pandoc-set-data-dir)
+  ("s" pandoc-save-settings-file)
+  ("p" pandoc-save-project-file)
+  ("g" pandoc-save-global-settings-file)
+  ("r" pandoc-revert-settings)
   ("q" nil "Quit")
-  ("b" pandoc-options-hydra/body "Back"))
+  ("b" pandoc-main-hydra/body "Back" :exit t))
 
 (defhydra pandoc-@-hydra (:foreign-keys warn :exit t :hint nil)
   "
@@ -1014,20 +1014,20 @@ _m_: Math rendering
   ("q" nil "Quit")
   ("b" pandoc-main-hydra/body "Back"))
 
-(defhydra pandoc-settings-file-hydra (:foreign-keys warn :exit t :hint nil)
+(defhydra pandoc-file-hydra (:foreign-keys warn :hint nil)
   "
-_s_: Save file settings
-_p_: Save project file
-_g_: Save global settings file
-_r_: Revert settings
+_m_: Master file       [%s(pandoc--pp-option 'master-file)]
+_o_: Output file       [%s(pandoc--pp-option 'output)]
+_O_: Output directory  [%s(pandoc--pp-option 'output-dir)]
+_d_: Data directory    [%s(pandoc--pp-option 'data-dir)]
 
 "
-  ("s" pandoc-save-settings-file)
-  ("p" pandoc-save-project-file)
-  ("g" pandoc-save-global-settings-file)
-  ("r" pandoc-revert-settings)
+  ("m" pandoc-set-master-file)
+  ("o" pandoc-set-output)
+  ("O" pandoc-set-output-dir)
+  ("d" pandoc-set-data-dir)
   ("q" nil "Quit")
-  ("b" pandoc-main-hydra/body "Back"))
+  ("b" pandoc-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-reader-options-hydra (:foreign-keys warn :hint nil)
   (concat "\n"
