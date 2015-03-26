@@ -266,7 +266,7 @@ Return a string that can be added to the call to Pandoc."
             (file-name-sans-extension (file-name-nondirectory input-file))
             (if pdf
                 ".pdf"
-              (cdr (assoc (pandoc--get 'write) pandoc--output-formats-list)))))
+              (cadr (assoc (pandoc--get 'write) pandoc-output-format-extensions)))))
    ((stringp (pandoc--get 'output)) ; if the user set an output file,
     (format "--output=%s/%s"      ; we combine it with the output directory
             (expand-file-name (or (pandoc--get 'output-dir)
@@ -432,7 +432,7 @@ If the region is active, pandoc is run on the region instead of
 the buffer."
   (interactive "P")
   (pandoc--call-external (if prefix
-                             (completing-read "Output format to use: " pandoc--output-formats-list nil t)
+                             (completing-read "Output format to use: " pandoc--output-formats nil t)
                            nil)
                          nil
                          (if (use-region-p)
@@ -701,7 +701,7 @@ options and their values."
 If a settings and/or project file exists for FORMAT, they are
 loaded. If none exists, all options are unset (except the input
 format)."
-  (interactive (list (completing-read "Set output format to: " pandoc--output-formats-list nil t)))
+  (interactive (list (completing-read "Set output format to: " pandoc--output-formats nil t)))
   (when (and pandoc--settings-modified-flag
              (y-or-n-p (format "Current settings for output format \"%s\" changed. Save? " (pandoc--get 'write))))
     (pandoc--save-settings 'settings (pandoc--get 'write) t))
@@ -841,13 +841,13 @@ set. Without any prefix argument, the option is toggled."
 
     ,(append (cons "Output Format"
                    (mapcar (lambda (option)
-                             (vector (car option)
-                                     `(pandoc-set-write ,(cdr option))
+                             (vector (cadr option)
+                                     `(pandoc-set-write ,(car option))
                                      :active t
                                      :style 'radio
                                      :selected `(string= (pandoc--get 'write)
-                                                         ,(cdr option))))
-                           pandoc--output-formats-menu))
+                                                         ,(car option))))
+                           pandoc--output-formats))
              (list ["Literal Haskell" (pandoc--toggle 'write-lhs)
                     :active (member (pandoc--get 'write)
                                     '("markdown" "rst" "latex" "beamer" "html" "html5"))
@@ -1018,16 +1018,16 @@ _m_: Math rendering
 
 (defhydra pandoc-file-hydra (:foreign-keys warn :hint nil)
   "
-_m_: Master file       [%s(pandoc--pp-option 'master-file)]
 _o_: Output file       [%s(pandoc--pp-option 'output)]
 _O_: Output directory  [%s(pandoc--pp-option 'output-dir)]
 _d_: Data directory    [%s(pandoc--pp-option 'data-dir)]
+_m_: Master file       [%s(pandoc--pp-option 'master-file)]
 
 "
-  ("m" pandoc-set-master-file)
   ("o" pandoc-set-output)
   ("O" pandoc-set-output-dir)
   ("d" pandoc-set-data-dir)
+  ("m" pandoc-set-master-file)
   ("q" nil "Quit")
   ("b" pandoc-options-hydra/body "Back" :exit t))
 
