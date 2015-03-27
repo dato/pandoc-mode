@@ -907,6 +907,8 @@ set. Without any prefix argument, the option is toggled."
 
 (defhydra pandoc-main-hydra (:foreign-keys warn :exit t :hint nil)
   "
+Main menu
+
 _r_: Run Pandoc               _I_: Input format
 _p_: Convert to pdf           _O_: Output format
 _V_: View output buffer       _s_: Settings files
@@ -953,6 +955,8 @@ _o_: Options
 
 (defhydra pandoc-settings-file-hydra (:foreign-keys warn :hint nil)
   "
+Settings files
+
 _s_: Save file settings
 _p_: Save project file
 _g_: Save global settings file
@@ -970,6 +974,8 @@ _r_: Revert settings
 
 (defhydra pandoc-@-hydra (:foreign-keys warn :exit t :hint nil)
   "
+Example lists
+
 _i_: Insert new example
 _s_: Select and insert example label
 
@@ -999,6 +1005,8 @@ _s_: Select and insert example label
 
 (defhydra pandoc-options-hydra (:foreign-keys warn :exit t :hint nil)
   "
+Options menu
+
 _f_: Files
 _r_: Reader options
 _w_: General writer options
@@ -1018,6 +1026,8 @@ _m_: Math rendering
 
 (defhydra pandoc-file-hydra (:foreign-keys warn :hint nil)
   "
+File options
+
 _o_: Output file       [%s(pandoc--pp-option 'output)]
 _O_: Output directory  [%s(pandoc--pp-option 'output-dir)]
 _d_: Data directory    [%s(pandoc--pp-option 'data-dir)]
@@ -1032,7 +1042,8 @@ _m_: Master file       [%s(pandoc--pp-option 'master-file)]
   ("b" pandoc-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-reader-options-hydra (:foreign-keys warn :hint nil)
-  (concat "\n"
+  (concat "Reader options"
+          "\n\n"
           (mapconcat #'car pandoc--reader-hydra-list "\n")
           "\n\n")
   (mapcar #'cdr pandoc--reader-hydra-list)
@@ -1040,7 +1051,8 @@ _m_: Master file       [%s(pandoc--pp-option 'master-file)]
   ("b" pandoc-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-writer-options-hydra (:foreign-keys warn :hint nil)
-  (concat "\n"
+  (concat "General writer options"
+          "\n\n"
           (mapconcat #'car pandoc--writer-hydra-list "\n")
           "\n\n")
   (mapcar #'cdr pandoc--writer-hydra-list)
@@ -1048,7 +1060,8 @@ _m_: Master file       [%s(pandoc--pp-option 'master-file)]
   ("b" pandoc-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-specific-options-hydra (:foreign-keys warn :hint nil)
-  (concat "\n"
+  (concat "Specific writer options"
+          "\n\n"
           (mapconcat #'car pandoc--specific-hydra-list "\n")
           "\n"
           (make-string 50 ?-)
@@ -1065,7 +1078,8 @@ _m_: Master file       [%s(pandoc--pp-option 'master-file)]
   ("b" pandoc-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-html-options-hydra (:foreign-keys warn :hint nil)
-  (concat "\n"
+  (concat "HTML-based writer options"
+          "\n\n"
           (mapconcat #'car pandoc--html-hydra-list "\n")
           "\n\n")
   (mapcar #'cdr pandoc--html-hydra-list)
@@ -1073,7 +1087,8 @@ _m_: Master file       [%s(pandoc--pp-option 'master-file)]
   ("b" pandoc-specific-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-tex-options-hydra (:foreign-keys warn :hint nil)
-  (concat "\n"
+  (concat "TeX-based writer options"
+          "\n\n"
           (mapconcat #'car pandoc--tex-hydra-list "\n")
           "\n\n")
   (mapcar #'cdr pandoc--tex-hydra-list)
@@ -1081,7 +1096,8 @@ _m_: Master file       [%s(pandoc--pp-option 'master-file)]
   ("b" pandoc-specific-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-epub-options-hydra (:foreign-keys warn :hint nil)
-  (concat "\n"
+  (concat "Epub writer options"
+          "\n\n"
           (mapconcat #'car pandoc--epub-hydra-list "\n")
           "\n\n")
   (mapcar #'cdr pandoc--epub-hydra-list)
@@ -1089,7 +1105,8 @@ _m_: Master file       [%s(pandoc--pp-option 'master-file)]
   ("b" pandoc-specific-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-citations-hydra (:foreign-keys warn :hint nil)
-  (concat "\n"
+  (concat "Citations menu"
+          "\n\n"
           (mapconcat #'car pandoc--citations-hydra-list "\n")
           "\n\n")
   (mapcar #'cdr pandoc--citations-hydra-list)
@@ -1097,7 +1114,8 @@ _m_: Master file       [%s(pandoc--pp-option 'master-file)]
   ("b" pandoc-options-hydra/body "Back" :exit t))
 
 (define-pandoc-hydra pandoc-math-hydra (:foreign-keys warn :hint nil)
-  (concat "\n"
+  (concat "Math rendering"
+          "\n\n"
           (mapconcat #'car pandoc--math-hydra-list "\n")
           "\n\n")
   (mapcar #'cdr pandoc--math-hydra-list)
