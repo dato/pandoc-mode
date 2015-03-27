@@ -1028,16 +1028,18 @@ _m_: Math rendering
   "
 File options
 
-_o_: Output file       [%s(pandoc--pp-option 'output)]
-_O_: Output directory  [%s(pandoc--pp-option 'output-dir)]
-_d_: Data directory    [%s(pandoc--pp-option 'data-dir)]
-_m_: Master file       [%s(pandoc--pp-option 'master-file)]
+_o_: Output file         [%s(pandoc--pp-option 'output)]
+_O_: Output directory    [%s(pandoc--pp-option 'output-dir)]
+_d_: Data directory      [%s(pandoc--pp-option 'data-dir)]
+_m_: Master file         [%s(pandoc--pp-option 'master-file)]
+_M_: Use current file as master file
 
 "
   ("o" pandoc-set-output)
   ("O" pandoc-set-output-dir)
   ("d" pandoc-set-data-dir)
   ("m" pandoc-set-master-file)
+  ("M" pandoc-set-this-file-as-master)
   ("q" nil "Quit")
   ("b" pandoc-options-hydra/body "Back" :exit t))
 
