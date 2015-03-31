@@ -1028,16 +1028,18 @@ _m_: Math rendering
   "
 File options
 
-_o_: Output file         [%s(pandoc--pp-option 'output)]
-_O_: Output directory    [%s(pandoc--pp-option 'output-dir)]
-_d_: Data directory      [%s(pandoc--pp-option 'data-dir)]
-_m_: Master file         [%s(pandoc--pp-option 'master-file)]
+_o_: Output file           [%s(pandoc--pp-option 'output)]
+_O_: Output directory      [%s(pandoc--pp-option 'output-dir)]
+_d_: Data directory        [%s(pandoc--pp-option 'data-dir)]
+_e_: Extract media files   [%s(pandoc--pp-option 'extract-media)]
+_m_: Master file           [%s(pandoc--pp-option 'master-file)]
 _M_: Use current file as master file
 
 "
   ("o" pandoc-set-output)
   ("O" pandoc-set-output-dir)
   ("d" pandoc-set-data-dir)
+  ("e" pandoc-set-extract-media)
   ("m" pandoc-set-master-file)
   ("M" pandoc-set-this-file-as-master)
   ("q" nil "Quit")
