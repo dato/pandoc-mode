@@ -967,7 +967,7 @@ _o_: Options
           "_X_: Extensions\n\n")
   (--map (list (caddr it) (list 'pandoc-set-write (car it)))
          pandoc--output-formats)
-  ("X" pandoc-write-exts-hydra/body)
+  ("X" pandoc-write-exts-hydra/body :exit t)
   ("q" nil "Quit")
   ("b" pandoc-main-hydra/body "Back" :exit t))
 
@@ -1009,17 +1009,17 @@ _s_: Select and insert example label
       pandoc-extension-active-marker
     pandoc-extension-inactive-marker))
 
-(defhydra pandoc-read-exts-hydra (:foreign-keys warn :exit t :hint nil)
-  (concat "\n" (pandoc--tabulate-extensions 'read) "\n\n<number> _t_: Toggle extension, _q_: Quit, _b_: Back")
+(defhydra pandoc-read-exts-hydra (:foreign-keys warn :hint nil)
+  (concat "\n" (pandoc--tabulate-extensions 'read) "\n\n<number> [_t_]: Toggle extension, [_q_]: Quit, [_b_]: Back")
   ("t" pandoc-toggle-read-extension-by-number)
   ("q" nil)
-  ("b" pandoc-input-format-hydra/body))
+  ("b" pandoc-input-format-hydra/body :exit t))
 
-(defhydra pandoc-write-exts-hydra (:foreign-keys warn :exit t :hint nil)
-  (concat "\n" (pandoc--tabulate-extensions 'write) "\n\n<number> _t_: Toggle extension, _q_: Quit, _b_: Back")
+(defhydra pandoc-write-exts-hydra (:foreign-keys warn :hint nil)
+  (concat "\n" (pandoc--tabulate-extensions 'write) "\n\n<number> [_t_]: Toggle extension, [_q_]: Quit, [_b_]: Back")
   ("t" pandoc-toggle-write-extension-by-number)
   ("q" nil)
-  ("b" pandoc-output-format-hydra/body))
+  ("b" pandoc-output-format-hydra/body :exit t))
 
 (defhydra pandoc-options-hydra (:foreign-keys warn :exit t :hint nil)
   "
