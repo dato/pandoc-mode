@@ -11,7 +11,7 @@ The current version of `pandoc-mode` is 2.10 and is compatible with Pandoc versi
 
 # Installation #
 
-The easiest way to install `pandoc-mode` is to use the [Melpa](http://melpa.org/) package repository. Alternatively, you can install it manually: download `pandoc-mode.el` and `pandoc-mode-utils.el`, put them into Emacs' loadpath (byte-compiling is recommended) and add the line `(load "pandoc-mode")` to your init file:
+The easiest way to install `pandoc-mode` is to use the [Melpa](http://melpa.org/) package repository. Alternatively, you can install it manually: download `pandoc-mode.el` and `pandoc-mode-utils.el`, put them into Emacs' loadpath (byte-compiling is recommended) and add the line `(load "pandoc-mode")` to your init file.
 
 Either installation method allows Emacs to load `pandoc-mode`, but they do not activate it. In order to activate `pandoc-mode` in a buffer, you need to type `M-x pandoc-mode`. To start `pandoc-mode` automatically when you load e.g., a Markdown file, you can add a hook to your init file:
 
@@ -32,9 +32,11 @@ The function `pandoc-load-default-settings` checks if a default settings file ex
 
 # Usage #
 
-`pandoc-mode` uses the [hydra](https://github.com/abo-abo/hydra) package to create a keyboard-driven menu interface to all options and settings. The main menu is called by pressing `C-c /`, after that, everything should be self-explanatory. From the main menu, you can run `pandoc` on the buffer, view the output buffer and the current settings, set the input and output formats, and you can go to the options menu.
+`pandoc-mode` uses the [hydra](https://github.com/abo-abo/hydra) package to create a keyboard-driven menu interface to all options and settings. The main menu is called by pressing `C-c /`. After that, everything should be self-explanatory. From the main menu, you can run `pandoc` on the buffer, view the output buffer and the current settings, set the input and output formats, and you can go to the options menu.
 
-In the options menu, you can set options for running `pandoc` on your input file. All Pandoc options can be set from the menu (except for one or two that do not make sense, e.g., `-D` or `--print-default-template`). Note that when you set options, they only apply to the current file and the current output format. When you open another file, or when you change the output format, all settings are set to their default values. (There are ways to make settings more permanent, of course, as discussed below.)
+Note that if `menu-bar-mode` is active, `pandoc-mode` also provides a menu in the menu bar. It has the same structure as the hydra menu and it has the advantage that options that do not apply to the current file (due to its input or output format), are generally greyed out. On the other hand, the hydra menu shows the value of the options and allows you to change more than one option without reopening the menu. The menu bar menu disappears when you select an option, the hydra menu (generally) does not. Instead, it can be dismissed with `q`. Below, I talk about the hydra menu specifically, but most of what is said applies to the menu bar menu as well.
+
+In the options menu, you can set options for running `pandoc` on your input file. All Pandoc options can be set from the menu (except for one or two that do not make sense, e.g., `--print-default-template`). Note that when you set options, they only apply to the current file *and* the current output format. When you open another file, or when you change the output format, all settings are reset to their default values. (There are ways to make settings more permanent, of course, as discussed below.)
 
 
 ## Input and output formats ##
@@ -54,11 +56,11 @@ The major modes for which `pandoc-mode` selects an input format automatically ca
 
 ## The options menu ##
 
-The options menu has a number of submenus, each related to a specific type of options: file options, reader options, writer options (general and specific), citations and math rendering. The file options menu contains options for the output file, output directory, data directory and master file. Only one of these (the data directory) corresponds directly to a Pandoc option. The output file and output directory options are combined to form Pandoc’s `--output` option, while the master file option is only used by `pandoc-mode`. These options are discussed in the sections ['Setting an output file'](#setting-an-output-file) and [’Master file’](#master-file), respectively.
+The options menu has a number of submenus, each related to a specific type of options: file options, reader options, writer options (general and specific), citations and math rendering. The file options menu contains options for the output file, output directory, data directory, the directory to extract media files to, and the master file. Only two of these (the data directory and the extract media directory) correspond directly to a Pandoc option. The output file and output directory options are combined to form Pandoc’s `--output` option, while the master file option is only used by `pandoc-mode`. These options are discussed in the sections ['Setting an output file'](#setting-an-output-file) and [’Master file’](#master-file), respectively.
 
-The subdivision in the options menu is based on the subdivision in the Pandoc README and the user guide on [Pandoc.org](http://pandoc.org/README.html), which should make it easier to find the relevant options in the menus. Note that the current value of each option is displayed beside it.
+Note that the subdivision in the options menu is based on the subdivision in the Pandoc README and the user guide on [Pandoc.org](http://pandoc.org/README.html), which should make it easier to find the relevant options in the menus.
 
-Pandoc’s options come in several different kinds. Switches, boolean options that do not take a value, are toggled when you select them, their value is displayed as either “yes” or “no”. For other options, you are asked to provide a value in the minibuffer. For template variables and metadata items, you are asked both a variable / metadata name and a value.
+One nice thing about the hydra menus is that the value of an option is displayed beside it. Pandoc’s options come in several different kinds. Switches, (boolean options that do not take a value), are toggled when you select them, and their value is displayed as either “yes” or “no”. If you select another kind of option, you are asked to provide a value in the minibuffer. For template variables and metadata items, you are asked both a variable / metadata name and a value.
 
 Unsetting an option can usually be done by prefixing the relevant key with a dash `-`. This is actually the negative prefix argument, which can be typed without the meta (alt) key when inside a hydra menu. So for example, if you’re in the files menu (`C-c / o f`), you can set an output file with `o`. To unset the output file, type `- o`.
 
@@ -66,20 +68,14 @@ Many Pandoc options have file names as values. When `pandoc-mode` calls `pandoc`
 
 The CSS style sheet is an exception to this: `pandoc-mode` always cuts off the directory part of the filename you specify as CSS style sheet and doesn't expand it. The reason for this is that the CSS style sheet will normally be transferred along with the output file(s) to a server, where it will most likely be in a different directory than on the computer you're generating your HTML files on.
 
-To get an overview of all the settings for the current file and output format, you can use the option “View current settings” in the main menu (`C-c / S`). This displays all settings in the `*Pandoc output*` buffer in a Lisp-like format. For example, the settings for LaTeX output of this manual look like this (unset options omitted):
+To get an overview of all the settings for the current file and output format, you can use the option “View current settings” in the main menu (`C-c / S`). This displays all settings in the `*Pandoc output*` buffer in a Lisp-like format. For example, the settings for TeXinfo output of this manual look like this (unset options omitted):
 
 ```
-((number-sections . t)
- (standalone . t)
+((standalone . t)
  (read . "markdown")
- (write . "latex")
- (output . "pandoc-mode-manual.tex")
- (output-dir . "~/src/pandoc-mode/website/")
- (variable
-  ("mainfont" . "Linux Libertine O")
-  ("sansfont" . "Linux Biolinum O")
-  ("geometry" . "a4paper"))
- (latex-engine . "xelatex"))
+ (write . "texinfo")
+ (output . t)
+ (include-before-body . "~/src/pandoc-mode/manual/texi-before-body"))
 ```
 
 
@@ -96,7 +92,7 @@ The first item in the menu is "Run Pandoc" (accessible with `C-c / r`), which, a
 
 Note that when you run Pandoc, Pandoc doesn't read the file on disk. Rather, Emacs feeds it the contents of the buffer through `stdin`. This means that you don't actually have to save your file before running Pandoc. Whatever is in your buffer, saved or not, is passed to Pandoc. Alternatively, if the region is active, only the region is sent to Pandoc.
 
-If you call this command with a prefix argument `C-u` (so the key sequence becomes `C-/` to display the menu and then `C-u r` to run Pandoc), Emacs asks you for an output format to use. If there is a settings file for the format you specify, the settings in it will be passed to Pandoc instead of the settings in the current buffer. If there is no settings file, Pandoc will be called with just the output format and no other options.
+If you call this command with a prefix argument `C-u` (so the key sequence becomes `C-/ C-u r`: `C-/` to open the menu and `C-u r` to run Pandoc), Emacs asks you for an output format to use. If there is a settings file for the format you specify, the settings in it will be passed to Pandoc instead of the settings in the current buffer. If there is no settings file, Pandoc will be called with just the output format and no other options.
 
 Note that specifying an output format this way does not change the output format or any of the settings in the buffer, it just changes the output profile used for calling Pandoc. This can be useful if you use different output formats but don't want to keep switching between profiles when creating the different output files.
 
@@ -105,9 +101,7 @@ Note that specifying an output format this way does not change the output format
 
 If you want to save the output to a file rather than have it appear in the output buffer, you can set an explicit output file. Note that setting an output *file* is not the same thing as setting an output *format* (though normally the output file has a suffix that indicates the format of the file).
 
-In `pandoc-mode`, the output file setting has three options: the default is to send output to stdout, in which case it is redirected to the buffer `*Pandoc output*`. Alternatively, you can let Emacs create an output filename for you. In this case the output file will have the same base name as the input file but with the proper suffix for the output format. To select this option, prefix the output file key `o` with `C-u` in the file options menu.
-
-The third option is to specify an explicit output file. This can (obviously) be done by hitting just `o`. Lastly, unsetting the output file, so that the output goes to the output buffer again, can be done with the key sequence `- o` in the file options menu.
+In `pandoc-mode`, the output file setting has three options: the default is to send output to stdout, in which case it is redirected to the buffer `*Pandoc output*`. This option can be selected by typing `- o` in the file options menu. Alternatively, you can let Emacs create an output filename for you. In this case the output file will have the same base name as the input file but with the proper suffix for the output format. To select this option, prefix the output file key `o` with `C-u` in the file options menu. The third option is to specify an explicit output file. This can (obviously) be done by hitting just `o`.
 
 Note that Pandoc does not allow output to be sent to stdout if the output format is an OpenOffice.org Document (ODT), EPUB or MS Word (docx) file. Therefore, Emacs will always create an output filename in those cases, unless of course you've explicitly set an output file yourself.
 
