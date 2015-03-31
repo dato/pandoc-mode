@@ -51,17 +51,15 @@ File: pandoc-mode.info,  Node: Installation,  Next: Usage,  Prev: Introduction, 
 
 The easiest way to install `pandoc-mode' is to use the Melpa
 (http://melpa.org/) package repository. Alternatively, you can install
-it manually: download `pandoc-mode.el', put it into Emacs' loadpath
-(byte-compiling is recommended) and add the following line to
-`~/.emacs':
-
-(load "pandoc-mode")
+it manually: download `pandoc-mode.el' and `pandoc-mode-utils.el', put
+them into Emacs' loadpath (byte-compiling is recommended) and add the
+line `(load "pandoc-mode")' to your init file.
 
 Either installation method allows Emacs to load `pandoc-mode', but they
 do not activate it. In order to activate `pandoc-mode' in a buffer, you
 need to type `M-x pandoc-mode'. To start `pandoc-mode' automatically
-when you load e.g., a Markdown file, you can add a hook to your
-`~/.emacs':
+when you load e.g., a Markdown file, you can add a hook to your init
+file:
 
 (add-hook 'markdown-mode-hook 'pandoc-mode)
 
@@ -75,7 +73,7 @@ the section *note 'Settings Files': #settings-files.)
 
 Additionally, if you want to automatically load the default
 `pandoc-mode' settings file for the file you're opening, you can add
-the following to your `~/.emacs':
+the following to your init file:
 
 (add-hook 'pandoc-mode-hook 'pandoc-load-default-settings)
 
@@ -91,19 +89,30 @@ File: pandoc-mode.info,  Node: Usage,  Next: Font lock,  Prev: Installation,  Up
 
 `pandoc-mode' uses the hydra (https://github.com/abo-abo/hydra) package
 to create a keyboard-driven menu interface to all options and settings.
-The main menu is called by pressing `C-c /', after that, everything
+The main menu is called by pressing `C-c /'. After that, everything
 should be self-explanatory. From the main menu, you can run `pandoc' on
 the buffer, view the output buffer and the current settings, set the
 input and output formats, and you can go to the options menu.
 
+Note that if `menu-bar-mode' is active, `pandoc-mode' also provides a
+menu in the menu bar. It has the same structure as the hydra menu and
+it has the advantage that options that do not apply to the current file
+(due to its input or output format), are generally greyed out. On the
+other hand, the hydra menu shows the value of the options and allows
+you to change more than one option without reopening the menu. The menu
+bar menu disappears when you select an option, the hydra menu
+(generally) does not. Instead, it can be dismissed with `q'. Below, I
+talk about the hydra menu specifically, but most of what is said
+applies to the menu bar menu as well.
+
 In the options menu, you can set options for running `pandoc' on your
 input file. All Pandoc options can be set from the menu (except for one
-or two that do not make sense, e.g., `-D' or
-`--print-default-template'). Note that when you set options, they only
-apply to the current file and the current output format. When you open
-another file, or when you change the output format, all settings are
-set to their default values. (There are ways to make settings more
-permanent, of course, as discussed below.)
+or two that do not make sense, e.g., `--print-default-template'). Note
+that when you set options, they only apply to the current file _and_
+the current output format. When you open another file, or when you
+change the output format, all settings are reset to their default
+values. (There are ways to make settings more permanent, of course, as
+discussed below.)
 
 * Menu:
 
@@ -179,27 +188,28 @@ File: pandoc-mode.info,  Node: The options menu,  Next: Template variables and m
 The options menu has a number of submenus, each related to a specific
 type of options: file options, reader options, writer options (general
 and specific), citations and math rendering. The file options menu
-contains options for the output file, output directory, data directory
-and master file. Only one of these (the data directory) corresponds
-directly to a Pandoc option. The output file and output directory
-options are combined to form Pandoc's `--output' option, while the
-master file option is only used by `pandoc-mode'. These options are
-discussed in the sections *note 'Setting an output file':
+contains options for the output file, output directory, data directory,
+the directory to extract media files to, and the master file. Only two
+of these (the data directory and the extract media directory)
+correspond directly to a Pandoc option. The output file and output
+directory options are combined to form Pandoc's `--output' option,
+while the master file option is only used by `pandoc-mode'. These
+options are discussed in the sections *note 'Setting an output file':
 #setting-an-output-file. and *note 'Master file': #master-file,
 respectively.
 
-The subdivision in the options menu is based on the subdivision in the
-Pandoc README and the user guide on Pandoc.org
+Note that the subdivision in the options menu is based on the
+subdivision in the Pandoc README and the user guide on Pandoc.org
 (http://pandoc.org/README.html), which should make it easier to find
-the relevant options in the menus. Note that the current value of each
-option is displayed beside it.
+the relevant options in the menus.
 
-Pandoc's options come in several different kinds. Switches, boolean
-options that do not take a value, are toggled when you select them,
-their value is displayed as either “yes” or “no”. For other options,
-you are asked to provide a value in the minibuffer. For template
-variables and metadata items, you are asked both a variable / metadata
-name and a value.
+One nice thing about the hydra menus is that the value of an option is
+displayed beside it. Pandoc's options come in several different kinds.
+Switches, (boolean options that do not take a value), are toggled when
+you select them, and their value is displayed as either “yes” or “no”.
+If you select another kind of option, you are asked to provide a value
+in the minibuffer. For template variables and metadata items, you are
+asked both a variable / metadata name and a value.
 
 Unsetting an option can usually be done by prefixing the relevant key
 with a dash `-'. This is actually the negative prefix argument, which
@@ -226,20 +236,14 @@ computer you're generating your HTML files on.
 To get an overview of all the settings for the current file and output
 format, you can use the option “View current settings” in the main menu
 (`C-c / S'). This displays all settings in the `*Pandoc output*' buffer
-in a Lisp-like format. For example, the settings for LaTeX output of
+in a Lisp-like format. For example, the settings for TeXinfo output of
 this manual look like this (unset options omitted):
 
-((number-sections . t)
- (standalone . t)
+((standalone . t)
  (read . "markdown")
- (write . "latex")
- (output . "pandoc-mode-manual.tex")
- (output-dir . "~/src/pandoc-mode/website/")
- (variable
-  ("mainfont" . "Linux Libertine O")
-  ("sansfont" . "Linux Biolinum O")
-  ("geometry" . "a4paper"))
- (latex-engine . "xelatex"))
+ (write . "texinfo")
+ (output . t)
+ (include-before-body . "~/src/pandoc-mode/manual/texi-before-body"))
 
 
 File: pandoc-mode.info,  Node: Template variables and metadata,  Next: Running Pandoc,  Prev: The options menu,  Up: Usage
@@ -281,7 +285,7 @@ Alternatively, if the region is active, only the region is sent to
 Pandoc.
 
 If you call this command with a prefix argument `C-u' (so the key
-sequence becomes `C-/' to display the menu and then `C-u r' to run
+sequence becomes `C-/ C-u r': `C-/' to open the menu and `C-u r' to run
 Pandoc), Emacs asks you for an output format to use. If there is a
 settings file for the format you specify, the settings in it will be
 passed to Pandoc instead of the settings in the current buffer. If
@@ -308,16 +312,13 @@ the format of the file).
 
 In `pandoc-mode', the output file setting has three options: the
 default is to send output to stdout, in which case it is redirected to
-the buffer `*Pandoc output*'. Alternatively, you can let Emacs create
-an output filename for you. In this case the output file will have the
+the buffer `*Pandoc output*'. This option can be selected by typing `-
+o' in the file options menu. Alternatively, you can let Emacs create an
+output filename for you. In this case the output file will have the
 same base name as the input file but with the proper suffix for the
 output format. To select this option, prefix the output file key `o'
-with `C-u' in the file options menu.
-
-The third option is to specify an explicit output file. This can
-(obviously) be done by hitting just `o'. Lastly, unsetting the output
-file, so that the output goes to the output buffer again, can be done
-with the key sequence `- o' in the file options menu.
+with `C-u' in the file options menu. The third option is to specify an
+explicit output file. This can (obviously) be done by hitting just `o'.
 
 Note that Pandoc does not allow output to be sent to stdout if the
 output format is an OpenOffice.org Document (ODT), EPUB or MS Word
@@ -478,7 +479,7 @@ directive's function takes as optional. Suppose you define
                  (format-time-string "%d %b %Y")))
 
 This way, you could write `@@date' to get just the date, and
-`@@date{Cologne}' to get "Cologne, 27 Mar 2015".
+`@@date{Cologne}' to get "Cologne, 31 Mar 2015".
 
 Two directives have been predefined: `@@lisp' and `@@include'. Both of
 these take an argument. `@@lisp' can be used to include Elisp code in
@@ -653,36 +654,36 @@ Node: Introduction504
 Ref: #introduction625
 Node: Installation1464
 Ref: #installation1587
-Node: Usage3052
-Ref: #usage3158
-Node: Input and output formats4244
-Ref: #input-and-output-formats4399
-Node: The options menu7239
-Ref: #the-options-menu7418
-Node: Template variables and metadata10643
-Ref: #template-variables-and-metadata10842
-Node: Running Pandoc11405
-Ref: #running-pandoc11576
-Node: Setting an output file13239
-Ref: #setting-an-output-file13409
-Node: Creating a pdf15148
-Ref: #creating-a-pdf15279
-Node: Font lock16093
-Ref: #font-lock16209
-Node: Settings Files16364
-Ref: #settings-files16511
-Node: Managing numbered examples18424
-Ref: #managing-numbered-examples18605
-Node: Using @@-directives19854
-Ref: #using--directives20031
-Node: Master file24586
-Ref: #master-file24722
-Node: Defining @@-directives26215
-Ref: #defining--directives26397
-Node: Directive hooks27927
-Ref: #directive-hooks28075
-Node: Disabling the hydra menu28402
-Ref: #disabling-the-hydra-menu28554
+Node: Usage3074
+Ref: #usage3180
+Node: Input and output formats4921
+Ref: #input-and-output-formats5076
+Node: The options menu7916
+Ref: #the-options-menu8095
+Node: Template variables and metadata11299
+Ref: #template-variables-and-metadata11498
+Node: Running Pandoc12061
+Ref: #running-pandoc12232
+Node: Setting an output file13900
+Ref: #setting-an-output-file14070
+Node: Creating a pdf15725
+Ref: #creating-a-pdf15856
+Node: Font lock16670
+Ref: #font-lock16786
+Node: Settings Files16941
+Ref: #settings-files17088
+Node: Managing numbered examples19001
+Ref: #managing-numbered-examples19182
+Node: Using @@-directives20431
+Ref: #using--directives20608
+Node: Master file25163
+Ref: #master-file25299
+Node: Defining @@-directives26792
+Ref: #defining--directives26974
+Node: Directive hooks28504
+Ref: #directive-hooks28652
+Node: Disabling the hydra menu28979
+Ref: #disabling-the-hydra-menu29131
 
 End Tag Table
 
