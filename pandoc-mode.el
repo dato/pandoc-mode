@@ -862,10 +862,6 @@ set. Without any prefix argument, the option is toggled."
                                    pandoc--extensions))))
 
     ("Files"
-     ("Master File"
-      ["No Master File" (pandoc-set-master-file '-) :active t :style radio :selected (null (pandoc--get 'master-file))]
-      ["Use This File As Master File" pandoc-set-this-file-as-master :active t :style radio :selected (equal (pandoc--get 'master-file) (buffer-file-name))]
-      ["Set Master File" pandoc-set-master-file :active t :style radio :selected (and (pandoc--get 'master-file) (not (equal (pandoc--get 'master-file) (buffer-file-name))))])
      ("Output File"
       ["Output To Stdout" (pandoc--set 'output nil) :active t
        :style radio :selected (null (pandoc--get 'output))]
@@ -888,18 +884,40 @@ set. Without any prefix argument, the option is toggled."
       ["Do Not Extract Media Files" (pandoc--set 'extract-media nil) :active t
        :style radio :selected (null (pandoc--get 'extract-media))]
       ["Extract Media Files" pandoc-set-extract-media :active t
-       :style radio :selected (pandoc--get 'extract-media)]))
+       :style radio :selected (pandoc--get 'extract-media)])
+     ("Master File"
+      ["No Master File" (pandoc-set-master-file '-) :active t :style radio :selected (null (pandoc--get 'master-file))]
+      ["Use This File As Master File" pandoc-set-this-file-as-master :active t :style radio :selected (equal (pandoc--get 'master-file) (buffer-file-name))]
+      ["Set Master File" pandoc-set-master-file :active t :style radio :selected (and (pandoc--get 'master-file) (not (equal (pandoc--get 'master-file) (buffer-file-name))))]))
 
-    ("Options"
-     ,@pandoc--options-menu)
-    ("Switches"
-     ;; put the binary options into the menu
-     ,@(mapcar (lambda (option)
-                 (vector (car option) `(pandoc--toggle (quote ,(cdr option)))
-                         :active t
-                         :style 'toggle
-                         :selected `(pandoc--get (quote ,(cdr option)))))
-               pandoc--switches))))
+    ("Reader Options"
+     ,@pandoc--reader-menu-list)
+    ("General Writer Options"
+     ,@pandoc--writer-menu-list)
+    ("Options For Specific Writers"
+     ,@pandoc--specific-menu-list
+     "--"
+     ("HTML-Based Formats"
+      ,@pandoc--html-menu-list)
+     ("TeX-Based Formats"
+      ,@pandoc--tex-menu-list)
+     ("EPUB"
+      ,@pandoc--epub-menu-list))
+    ("Citations"
+     ,@pandoc--citations-menu-list)
+    ("Math Rendering"
+     ,@pandoc--math-menu-list)))
+
+    ;; ("Options"
+    ;;  ,@pandoc--options-menu)
+    ;; ("Switches"
+    ;;  ;; put the binary options into the menu
+    ;;  ,@(mapcar (lambda (option)
+    ;;              (vector (car option) `(pandoc--toggle (quote ,(cdr option)))
+    ;;                      :active t
+    ;;                      :style 'toggle
+    ;;                      :selected `(pandoc--get (quote ,(cdr option)))))
+    ;;            pandoc--switches))
 
 (easy-menu-add pandoc-mode-menu pandoc-mode-map)
 

@@ -466,6 +466,26 @@ write extension is to be queried."
                             (pandoc--get 'read-extensions)
                           (pandoc--get 'write-extensions)))))
 
+;; hydra variables
+(defvar pandoc--reader-hydra-list nil)
+(defvar pandoc--writer-hydra-list nil)
+(defvar pandoc--specific-hydra-list nil)
+(defvar pandoc--html-hydra-list nil)
+(defvar pandoc--tex-hydra-list nil)
+(defvar pandoc--epub-hydra-list nil)
+(defvar pandoc--citations-hydra-list nil)
+(defvar pandoc--math-hydra-list nil)
+
+;; menu variables
+(defvar pandoc--reader-menu-list nil)
+(defvar pandoc--writer-menu-list nil)
+(defvar pandoc--specific-menu-list nil)
+(defvar pandoc--html-menu-list nil)
+(defvar pandoc--tex-menu-list nil)
+(defvar pandoc--epub-menu-list nil)
+(defvar pandoc--citations-menu-list nil)
+(defvar pandoc--math-menu-list nil)
+
 (defmacro define-pandoc-switch (option hydra description)
   "Create a binary option.
 OPTION must be a symbol and must be identical to the long form of
@@ -473,6 +493,12 @@ the pandoc option (without dashes). DESCRIPTION is the
 description of the option as it will appear in the menu."
   (declare (indent defun))
   `(progn
+     (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-menu-list")))
+                  ,(vector description `(pandoc--toggle (quote ,option))
+                           :active t
+                           :style 'toggle
+                           :selected `(pandoc--get (quote ,option)))
+                  t)
      (add-to-list 'pandoc--switches (cons ,description (quote ,option)) t)
      (add-to-list 'pandoc--cli-options (quote ,option) t)
      (add-to-list 'pandoc--options (list (quote ,option)) t)
@@ -509,7 +535,7 @@ the option can have a default value."
         `(add-to-list 'pandoc--filepath-options (quote ,option) t))
      (add-to-list 'pandoc--cli-options (quote ,option) t)
      (add-to-list 'pandoc--options (list (quote ,option)) t)
-     (add-to-list 'pandoc--files-menu
+     (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-menu-list")))
                   (list ,@(delq nil ; if DEFAULT is nil, we need to remove it from the list.
                                 (list prompt
                                       (vector (concat "No " prompt) `(pandoc--set (quote ,option) nil)
@@ -526,12 +552,12 @@ the option can have a default value."
                                               :active t
                                               :style 'radio
                                               :selected `(stringp (pandoc--get (quote ,option)))))))
-                  t) ; add to the end of `pandoc--options-menu'
+                  t)
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
                   (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) prompt) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
-                  t) ; add to the end of `pandoc--*-hydra-list'.
+                  t)
      (fset (quote ,(intern (concat "pandoc-set-" (symbol-name option))))
            (lambda (prefix)
              (interactive "P")
@@ -562,7 +588,7 @@ formulated in such a way that the strings \"Default \" and \"Set
   `(progn
      (add-to-list 'pandoc--options (list (quote ,option)) t)
      (add-to-list 'pandoc--cli-options (quote ,option) t)
-     (add-to-list 'pandoc--options-menu
+     (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-menu-list")))
                   (list ,prompt
                         ,(vector (concat "Default " prompt) `(pandoc--set (quote ,option) nil)
                                  :active t
@@ -572,12 +598,12 @@ formulated in such a way that the strings \"Default \" and \"Set
                                  :active t
                                  :style 'radio
                                  :selected `(pandoc--get (quote ,option))))
-                  t) ; add to the end of `pandoc--options-menu'
+                  t)
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
                   (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) prompt) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
-                  t) ; add to the end of `pandoc--*-hydra-list'.
+                  t)
      (fset (quote ,(intern (concat "pandoc-set-" (symbol-name option))))
            (lambda (prefix)
              (interactive "P")
@@ -607,7 +633,7 @@ or T and indicates whether the option can have a default value."
   `(progn
      (add-to-list 'pandoc--options (list (quote ,option)) t)
      (add-to-list 'pandoc--cli-options (quote ,option) t)
-     (add-to-list 'pandoc--options-menu
+     (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-menu-list")))
                   (list ,@(delq nil ; if DEFAULT is nil, we need to remove it from the list.
                                 (list prompt
                                       (vector (concat "No " prompt) `(pandoc--set (quote ,option) nil)
@@ -623,12 +649,12 @@ or T and indicates whether the option can have a default value."
                                               :active t
                                               :style 'radio
                                               :selected `(stringp (pandoc--get (quote ,option)))))))
-                  t) ; add to the end of `pandoc--options-menu'
+                  t)
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
                   (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) prompt) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
-                  t) ; add to the end of `pandoc--*-hydra-list'.
+                  t)
      (fset (quote ,(intern (concat "pandoc-set-" (symbol-name option))))
            (lambda (prefix)
              (interactive "P")
@@ -656,20 +682,18 @@ it."
   `(progn
      (add-to-list 'pandoc--options (list (quote ,option)) t)
      (add-to-list 'pandoc--list-options (quote ,option) t)
-     (add-to-list (quote ,(if (eq type 'string)
-                              'pandoc--options-menu
-                            'pandoc--files-menu))
+     (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-menu-list")))
                   (list ,description
                         ,(vector (concat "Add " prompt) (intern (concat "pandoc-set-" (symbol-name option)))
                                  :active t)
                         ,(vector (concat "Remove " prompt) (list (intern (concat "pandoc-set-" (symbol-name option))) `(quote -))
                                  :active `(pandoc--get (quote ,option))))
-                  t)              ; add to the end of `pandoc--{options|files}-menu'
+                  t)
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
                   (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) description) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
-                  t) ; add to the end of `pandoc--*-hydra-list'.
+                  t)
      (fset (quote ,(intern (concat "pandoc-set-" (symbol-name option))))
            (lambda (prefix)
              (interactive "P")
@@ -703,20 +727,18 @@ before it."
   `(progn
      (add-to-list 'pandoc--options (list (quote ,option)) t)
      (add-to-list 'pandoc--alist-options (quote ,option) t)
-     (add-to-list (quote ,(if (eq type 'string)
-                              'pandoc--options-menu
-                            'pandoc--files-menu))
+     (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-menu-list")))
                   (list ,description
                         ,(vector (concat "Set/Change " prompt) (intern (concat "pandoc-set-" (symbol-name option)))
                                  :active t)
                         ,(vector (concat "Unset " prompt) (list (intern (concat "pandoc-set-" (symbol-name option))) `(quote -))
                                  :active t))
-                  t)              ; add to the end of `pandoc--options-menu'
+                  t)
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
                   (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) description) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
                                 (intern (concat "pandoc-set-" (symbol-name option)))))
-                  t) ; add to the end of `pandoc--*-hydra-list'.
+                  t)
      (fset (quote ,(intern (concat "pandoc-set-" (symbol-name option))))
            (lambda (prefix)
              (interactive "P")
@@ -754,17 +776,18 @@ menu."
   `(progn
      (add-to-list 'pandoc--options (list (quote ,option)) t)
      (add-to-list 'pandoc--cli-options (quote ,option) t)
-     (add-to-list 'pandoc--options-menu (list ,prompt
-                                              :active (quote (member (pandoc--get 'write) (quote ,output-formats)))
-                                              ,(vector (car choices) `(pandoc--set (quote ,option) ,(car choices))
-                                                       :style 'radio
-                                                       :selected `(null (pandoc--get (quote ,option))))
-                                              ,@(mapcar (lambda (choice)
-                                                          (vector choice `(pandoc--set (quote ,option) ,choice)
-                                                                  :style 'radio
-                                                                  :selected `(string= (pandoc--get (quote ,option)) ,choice)))
-                                                        (cdr choices)))
-                  t)              ; add to the end of `pandoc--options-menu'
+     (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-menu-list")))
+                  (list ,prompt
+                        :active (quote (member (pandoc--get 'write) (quote ,output-formats)))
+                        ,(vector (car choices) `(pandoc--set (quote ,option) ,(car choices))
+                                 :style 'radio
+                                 :selected `(null (pandoc--get (quote ,option))))
+                        ,@(mapcar (lambda (choice)
+                                    (vector choice `(pandoc--set (quote ,option) ,choice)
+                                            :style 'radio
+                                            :selected `(string= (pandoc--get (quote ,option)) ,choice)))
+                                  (cdr choices)))
+                  t)
      (add-to-list (quote ,(intern (concat "pandoc--" (symbol-name (car hydra)) "-hydra-list")))
                   (quote ,(list (concat "_" (cadr hydra) "_: " (format (caddr hydra) prompt) (format " [%%s(pandoc--pp-option '%s)]" option))
                                 (cadr hydra)
@@ -881,15 +904,6 @@ evaluated."
 ;; version
 ;; help
 
-(defvar pandoc--reader-hydra-list nil)
-(defvar pandoc--writer-hydra-list nil)
-(defvar pandoc--specific-hydra-list nil)
-(defvar pandoc--html-hydra-list nil)
-(defvar pandoc--tex-hydra-list nil)
-(defvar pandoc--epub-hydra-list nil)
-(defvar pandoc--citations-hydra-list nil)
-(defvar pandoc--math-hydra-list nil)
-
 ;;; Reader options
 (define-pandoc-switch               parse-raw               (reader "r" "%-23s") "Parse Raw")
 (define-pandoc-switch               smart                   (reader "s" "%-23s") "Smart")
@@ -943,7 +957,7 @@ evaluated."
 (define-pandoc-string-option  number-offset     (html "o" "%-31s") "Number Offsets")
 (define-pandoc-switch         section-divs      (html "d" "%-31s") "Wrap Sections in <div> Tags")
 (define-pandoc-choice-option  email-obfuscation (html "e" "%-31s") "Email Obfuscation" ("none" "javascript" "references") ("html" "html5" "s5" "slidy" "slideous" "dzslides" "revealjs"))
-(define-pandoc-string-option  title-prefix      (html "t" "%-31s") "Title prefix") 
+(define-pandoc-string-option  title-prefix      (html "t" "%-31s") "Title prefix")
 (define-pandoc-file-option    css               (html "c" "%-31s") "CSS Style Sheet")
 (define-pandoc-string-option  id-prefix         (html "i" "%-31s") "ID prefix")
 
